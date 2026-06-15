@@ -1,0 +1,48 @@
+# Cloud Build pipeline for the Spring Boot backend.
+# Triggered on push to main (path filter: backend/**) — see DEPLOY.md.
+# All TiDB connection values come from Secret Manager, so nothing sensitive
+# lives in this file and it is safe to commit to a public repo.
+
+substitutions:
+  _SERVICE: medicine-api
+  _REGION: asia-east1
+  _REPO: medicine # Artifact Registry repository name
+
+steps:
+  # 1) Build the image (context = backend/, uses backend/Dockerfile)
+  - id: Build
+    name: gcr.io/cloud-builders/docker
+    dir: backend
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - .
+
+  # 2) Push both tags to Artifact Registry
+  - id: Push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}
+
+  # 3) Deploy to Cloud Run
+  - id: Deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --set-env-vars=SPRING_PROFILES_ACTIVE=prod
+      - --set-secrets=SPRING_DATASOURCE_URL=tidb-url:latest,SPRING_DATASOURCE_USERNAME=tidb-username:latest,SPRING_DATASOURCE_PASSWORD=tidb-password:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY
