@@ -6,6 +6,8 @@ import com.medicine.api.service.MedicineService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,28 +31,31 @@ public class MedicineController {
     }
 
     @GetMapping
-    public List<Medicine> list(@RequestParam(value = "q", required = false) String query) {
-        return service.findAll(query);
+    public List<Medicine> list(@AuthenticationPrincipal Jwt jwt,
+                               @RequestParam(value = "q", required = false) String query) {
+        return service.findAll(jwt.getSubject(), query);
     }
 
     @GetMapping("/{id}")
-    public Medicine get(@PathVariable Long id) {
-        return service.findById(id);
+    public Medicine get(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        return service.findById(jwt.getSubject(), id);
     }
 
     @PostMapping
-    public ResponseEntity<Medicine> create(@Valid @RequestBody MedicineRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+    public ResponseEntity<Medicine> create(@AuthenticationPrincipal Jwt jwt,
+                                           @Valid @RequestBody MedicineRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(jwt.getSubject(), request));
     }
 
     @PutMapping("/{id}")
-    public Medicine update(@PathVariable Long id, @Valid @RequestBody MedicineRequest request) {
-        return service.update(id, request);
+    public Medicine update(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id,
+                           @Valid @RequestBody MedicineRequest request) {
+        return service.update(jwt.getSubject(), id, request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        service.delete(jwt.getSubject(), id);
         return ResponseEntity.noContent().build();
     }
 }

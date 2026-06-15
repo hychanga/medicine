@@ -22,6 +22,9 @@ public class Medicine {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false, length = 128)
+    private String userId;
+
     @NotBlank
     @Column(nullable = false, length = 200)
     private String name;
@@ -69,6 +72,14 @@ public class Medicine {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getName() {

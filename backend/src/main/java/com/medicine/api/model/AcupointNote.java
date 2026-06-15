@@ -14,12 +14,15 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "acupoint_notes",
-        uniqueConstraints = @UniqueConstraint(columnNames = "point_id"))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "point_id"}))
 public class AcupointNote {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "user_id", nullable = false, length = 128)
+    private String userId;
 
     @Column(name = "point_id", nullable = false, length = 32)
     private String pointId;
@@ -33,7 +36,8 @@ public class AcupointNote {
     public AcupointNote() {
     }
 
-    public AcupointNote(String pointId, String content) {
+    public AcupointNote(String userId, String pointId, String content) {
+        this.userId = userId;
         this.pointId = pointId;
         this.content = content;
     }
@@ -46,6 +50,14 @@ public class AcupointNote {
 
     public Long getId() {
         return id;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getPointId() {

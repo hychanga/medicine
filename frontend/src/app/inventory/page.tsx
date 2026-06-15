@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import MedicineForm from "@/components/MedicineForm";
 import {
   createMedicine,
@@ -27,6 +28,8 @@ function expiryStatus(date: string | null): {
 }
 
 export default function Home() {
+  const { status: authStatus } = useSession();
+  const authed = authStatus === "authenticated";
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,9 +50,35 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!authed) return;
     const t = setTimeout(() => load(search.trim() || undefined), 300);
     return () => clearTimeout(t);
-  }, [search, load]);
+  }, [search, load, authed]);
+
+  if (authStatus === "loading") {
+    return (
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
+        <p className="text-sm text-black/60 dark:text-white/60">載入中…</p>
+      </main>
+    );
+  }
+
+  if (!authed) {
+    return (
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-16 sm:px-6 text-center">
+        <h1 className="mb-3 text-2xl font-bold tracking-tight">💊 藥品庫存</h1>
+        <p className="mb-6 text-sm text-black/60 dark:text-white/60">
+          請先登入，藥品庫存為每位使用者各自儲存。
+        </p>
+        <button
+          onClick={() => signIn("google")}
+          className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          以 Google 登入
+        </button>
+      </main>
+    );
+  }
 
   async function handleSubmit(input: MedicineInput) {
     if (editing) {

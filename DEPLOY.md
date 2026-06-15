@@ -58,15 +58,30 @@ gcloud builds triggers run medicine-api-deploy --branch=main
 
 ## B. 前端 → Vercel（Git 整合）
 
+### B-1. 建立 Google OAuth 用戶端（一次性）
+GCP Console → APIs & Services → Credentials → **Create OAuth client ID** → Web application：
+- **Authorized JavaScript origins**：`https://<你的-vercel-domain>`
+- **Authorized redirect URIs**：`https://<你的-vercel-domain>/api/auth/callback/google`
+（本機開發再加 `http://localhost:3000` 與 `http://localhost:3000/api/auth/callback/google`）
+
+記下 Client ID 與 Client secret。
+
+### B-2. Import 專案
 1. 到 <https://vercel.com/new> → Import `hychanga/medicine`
 2. **Root Directory** 選 `frontend`（Framework 會自動偵測 Next.js）
 3. **Environment Variables** 新增：
    | Name | Value |
    |------|-------|
    | `API_BASE_URL` | 步驟 A.3 取得的 Cloud Run URL（不含結尾斜線） |
+   | `AUTH_SECRET` | `openssl rand -base64 32` 產生的隨機值 |
+   | `AUTH_GOOGLE_ID` | B-1 的 Client ID |
+   | `AUTH_GOOGLE_SECRET` | B-1 的 Client secret |
+   | `AUTH_SHARED_SECRET` | 與後端 `auth-shared-secret` **完全相同**的值 |
 4. Deploy
 
 設定完成後，**每次 push 到 `main` 都會自動部署**，PR 也會有 preview URL。
+
+> `AUTH_SHARED_SECRET` 前後端必須一致，否則後端會拒絕（401）。後端的值存在 GCP Secret Manager 的 `auth-shared-secret`。
 
 > `API_BASE_URL` 在 build 時取值；之後若改了後端網址，到 Vercel 改環境變數並 redeploy（或推一個新 commit）即可。
 

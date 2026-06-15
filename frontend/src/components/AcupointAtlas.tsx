@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import BodyFigure from "./BodyFigure";
 import s from "./atlas.module.css";
 import { getNote, saveNote } from "@/lib/notesApi";
@@ -268,6 +269,8 @@ export default function AcupointAtlas() {
 
 function PointDetail({ selectedId }: { selectedId: string | null }) {
   const p = POINTS.find((pt) => pt.id === selectedId) ?? null;
+  const { status: authStatus } = useSession();
+  const authed = authStatus === "authenticated";
   const [note, setNote] = useState("");
   const [status, setStatus] = useState("");
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -276,7 +279,7 @@ function PointDetail({ selectedId }: { selectedId: string | null }) {
     let active = true;
     setNote("");
     setStatus("");
-    if (p) {
+    if (p && authed) {
       getNote(p.id).then((value) => {
         if (active) setNote(value);
       });
@@ -284,7 +287,7 @@ function PointDetail({ selectedId }: { selectedId: string | null }) {
     return () => {
       active = false;
     };
-  }, [p]);
+  }, [p, authed]);
 
   if (!p) {
     return (
@@ -341,12 +344,35 @@ function PointDetail({ selectedId }: { selectedId: string | null }) {
         </section>
         <div className={s.noteBox}>
           <h3>我的筆記</h3>
-          <textarea
-            value={note}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="記錄個人按壓心得、症狀反應或提醒事項⋯"
-          />
-          <div className={s.noteStatus}>{status}</div>
+          {authed ? (
+            <>
+              <textarea
+                value={note}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder="記錄個人按壓心得、症狀反應或提醒事項⋯"
+              />
+              <div className={s.noteStatus}>{status}</div>
+            </>
+          ) : (
+            <p className={s.noteStatus} style={{ height: "auto", lineHeight: 1.8 }}>
+              <button
+                type="button"
+                onClick={() => signIn("google")}
+                style={{
+                  color: "var(--cinnabar)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  font: "inherit",
+                  textDecoration: "underline",
+                }}
+              >
+                以 Google 登入
+              </button>
+              {" "}後即可記錄個人筆記（每人各自儲存）。
+            </p>
+          )}
         </div>
       </div>
     </>

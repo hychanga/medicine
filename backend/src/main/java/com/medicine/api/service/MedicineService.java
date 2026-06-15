@@ -18,32 +18,33 @@ public class MedicineService {
         this.repository = repository;
     }
 
-    public List<Medicine> findAll(String query) {
+    public List<Medicine> findAll(String userId, String query) {
         if (StringUtils.hasText(query)) {
-            return repository.search(query.trim());
+            return repository.search(userId, query.trim());
         }
-        return repository.findAll();
+        return repository.findByUserIdOrderByIdDesc(userId);
     }
 
-    public Medicine findById(Long id) {
-        return repository.findById(id)
+    public Medicine findById(String userId, Long id) {
+        return repository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Medicine not found: " + id));
     }
 
-    public Medicine create(MedicineRequest request) {
+    public Medicine create(String userId, MedicineRequest request) {
         Medicine medicine = new Medicine();
+        medicine.setUserId(userId);
         apply(medicine, request);
         return repository.save(medicine);
     }
 
-    public Medicine update(Long id, MedicineRequest request) {
-        Medicine medicine = findById(id);
+    public Medicine update(String userId, Long id, MedicineRequest request) {
+        Medicine medicine = findById(userId, id);
         apply(medicine, request);
         return repository.save(medicine);
     }
 
-    public void delete(Long id) {
-        if (!repository.existsById(id)) {
+    public void delete(String userId, Long id) {
+        if (!repository.existsByIdAndUserId(id, userId)) {
             throw new ResourceNotFoundException("Medicine not found: " + id);
         }
         repository.deleteById(id);
