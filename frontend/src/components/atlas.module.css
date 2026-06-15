@@ -1,0 +1,446 @@
+.root {
+  --paper: #f5efe3;
+  --paper-deep: #ece3d2;
+  --ink: #2b2620;
+  --ink-soft: #6b5f50;
+  --cinnabar: #b5402e;
+  --jade: #5c7a5c;
+  --bamboo: #c9a876;
+  --line: #d8cbb4;
+
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100%;
+  background-image: radial-gradient(
+      circle at 15% 20%,
+      rgba(201, 168, 118, 0.1) 0%,
+      transparent 40%
+    ),
+    radial-gradient(circle at 85% 80%, rgba(92, 122, 92, 0.08) 0%, transparent 45%);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+.header {
+  padding: 28px 32px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.header h1 {
+  font-size: 30px;
+  margin: 0;
+  letter-spacing: 0.08em;
+  font-family: "Noto Serif TC", serif;
+  font-weight: 900;
+}
+.header h1 span {
+  color: var(--cinnabar);
+}
+.header p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.tabBtn {
+  padding: 8px 18px;
+  border: 1px solid var(--ink);
+  border-radius: 18px;
+  background: transparent;
+  font-family: "Noto Serif TC", serif;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  color: var(--ink);
+}
+.tabBtn.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 340px;
+  gap: 0;
+  min-height: 70vh;
+}
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .sidebar,
+  .detail {
+    order: 2;
+  }
+  .stage {
+    order: 1;
+  }
+}
+.sidebar {
+  padding: 24px 18px;
+  border-right: 1px solid var(--line);
+}
+.sidebar h2,
+.detail h2 {
+  font-family: "Noto Serif TC", serif;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  color: var(--ink-soft);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+.meridianBtn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: inherit;
+  transition: 0.15s;
+}
+.meridianBtn:hover {
+  background: var(--paper-deep);
+}
+.meridianBtn.active {
+  background: var(--paper-deep);
+  border-color: var(--bamboo);
+  color: var(--cinnabar);
+  font-weight: 700;
+}
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 12px;
+  position: relative;
+}
+.stageToolbar {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.stageToolbar input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  color: var(--ink);
+}
+.stageToolbar input:focus {
+  border-color: var(--cinnabar);
+}
+.viewToggle {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.viewToggle button {
+  padding: 10px 16px;
+  border: none;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+.viewToggle button.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+.bodyChart {
+  width: 100%;
+  max-width: 420px;
+  touch-action: manipulation;
+}
+.point {
+  cursor: pointer;
+}
+.point circle.halo {
+  fill: none;
+  stroke: var(--cinnabar);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition: opacity 0.15s, r 0.15s;
+}
+.point circle.core {
+  fill: var(--cinnabar);
+  transition: r 0.15s, fill 0.15s;
+}
+.point:hover circle.halo,
+.point.selected circle.halo {
+  opacity: 1;
+  r: 11;
+}
+.point.selected circle.core {
+  fill: var(--jade);
+}
+.point text {
+  font-size: 9px;
+  fill: var(--ink-soft);
+  font-family: "Noto Serif TC", serif;
+  pointer-events: none;
+}
+.stageHint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-align: center;
+  max-width: 420px;
+}
+.detail {
+  padding: 24px 22px;
+  border-left: 1px solid var(--line);
+}
+.emptyState {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.9;
+  padding-top: 6px;
+}
+.seal {
+  display: inline-block;
+  border: 2px solid var(--cinnabar);
+  color: var(--cinnabar);
+  font-family: "Noto Serif TC", serif;
+  font-weight: 900;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transform: rotate(-4deg);
+  margin-bottom: 14px;
+}
+.pointCard {
+  animation: fade 0.25s ease;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.nameCn {
+  font-family: "Noto Serif TC", serif;
+  font-size: 28px;
+  font-weight: 900;
+  margin: 0;
+  line-height: 1.2;
+}
+.namePy {
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin: 4px 0 2px;
+}
+.code {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: "Noto Serif TC", serif;
+  font-size: 12px;
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  padding: 2px 8px;
+  letter-spacing: 0.1em;
+}
+.meridianTag {
+  display: inline-block;
+  margin-top: 6px;
+  margin-left: 6px;
+  font-size: 12px;
+  color: #fff;
+  border-radius: 3px;
+  padding: 2px 8px;
+}
+.pointCard section {
+  margin-top: 16px;
+}
+.pointCard section h3 {
+  font-family: "Noto Serif TC", serif;
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  margin: 0 0 6px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+}
+.pointCard section p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.9;
+}
+.noteBox {
+  margin-top: 18px;
+}
+.noteBox h3 {
+  font-family: "Noto Serif TC", serif;
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+  margin: 0 0 6px;
+}
+.noteBox textarea {
+  width: 100%;
+  min-height: 70px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  background: #fff;
+  outline: none;
+  color: var(--ink);
+}
+.noteBox textarea:focus {
+  border-color: var(--bamboo);
+}
+.noteStatus {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+  height: 14px;
+}
+.symptomGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+}
+.symptomCard {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: 0.15s;
+  text-align: left;
+}
+.symptomCard:hover,
+.symptomCard.selected {
+  border-color: var(--cinnabar);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+.catTag {
+  display: inline-block;
+  font-size: 10px;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin-bottom: 6px;
+}
+.symptomCard h4 {
+  font-family: "Noto Serif TC", serif;
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+.symptomCard p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+.formulaList .nameCn {
+  font-size: 24px;
+}
+.formulaItem {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+.formulaItem h4 {
+  font-family: "Noto Serif TC", serif;
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+.patternTag {
+  display: inline-block;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  background: var(--paper-deep);
+  border-radius: 3px;
+  padding: 2px 8px;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+.fRow {
+  font-size: 13px;
+  line-height: 1.85;
+  margin-top: 4px;
+}
+.fRow b {
+  font-family: "Noto Serif TC", serif;
+  color: var(--ink-soft);
+  font-weight: 700;
+  margin-right: 4px;
+}
+.relatedPoints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.relatedPoints button {
+  border: 1px solid var(--bamboo);
+  background: transparent;
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--ink);
+}
+.relatedPoints button:hover {
+  background: var(--bamboo);
+  color: #fff;
+}
+.disclaimer {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  background: var(--paper-deep);
+  border-left: 3px solid var(--cinnabar);
+  padding: 8px 12px;
+  margin-top: 14px;
+  line-height: 1.7;
+  border-radius: 0 4px 4px 0;
+}
+.favEmpty {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
