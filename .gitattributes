@@ -1,0 +1,5 @@
+# Keep shell scripts LF so they run correctly in bash regardless of OS checkout.
+*.sh text eol=lf
+
+# Normalize text files
+* text=auto
