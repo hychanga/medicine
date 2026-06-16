@@ -28,6 +28,13 @@ function remap(x: number, y: number): XY {
   return { x: Math.round(nx), y: Math.round(ny) };
 }
 
+// Trailing number of a point id is its sequence along the meridian
+// (e.g. GB14 → 14), used to order points when drawing meridian lines.
+function seq(id: string): number {
+  const m = id.match(/(\d+)\s*$/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
 export default function AcupointAtlas() {
   const [view, setView] = useState<View>("body");
   const [side, setSide] = useState<Side>("front");
@@ -251,6 +258,42 @@ export default function AcupointAtlas() {
                 onPointerUp={onSvgUp}
               >
                 <BodyFigure side={side} />
+                <g style={{ pointerEvents: "none" }}>
+                  {(() => {
+                    const groups: Record<string, Point[]> = {};
+                    for (const p of POINTS) {
+                      if (p.view !== side || p.meridian === "經外奇穴") continue;
+                      (groups[p.meridian] ||= []).push(p);
+                    }
+                    return Object.entries(groups)
+                      .map(([name, pts]) => ({
+                        name,
+                        pts: pts.slice().sort((a, b) => seq(a.id) - seq(b.id)),
+                      }))
+                      .filter((g) => g.pts.length >= 2)
+                      .map((g) => {
+                        const d = g.pts
+                          .map((p, i) => {
+                            const c = resolve(p);
+                            return `${i ? "L" : "M"} ${c.x} ${c.y}`;
+                          })
+                          .join(" ");
+                        const isSel = meridian === g.name;
+                        return (
+                          <path
+                            key={g.name}
+                            d={d}
+                            fill="none"
+                            stroke={MERIDIAN_COLORS[g.name] || "#8A8273"}
+                            strokeWidth={isSel ? 2.2 : 1.3}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            opacity={meridian === "ALL" ? 0.3 : isSel ? 0.85 : 0.05}
+                          />
+                        );
+                      });
+                  })()}
+                </g>
                 <g>
                   {POINTS.filter((p) => p.view === side).map((p) => {
                     const visible = calibrate || matchesPoint(p);
