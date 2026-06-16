@@ -16,6 +16,18 @@ import {
 type View = "body" | "symptom";
 type Side = "front" | "back";
 
+type XY = { x: number; y: number };
+
+// Transitional: the old acupoint coordinates were tuned to a 0–400 × 0–900
+// hand-drawn figure. The new photo fills a 0–400 × 0–600 space, so we map the
+// old coords in as a rough starting position; calibration mode then lets the
+// points be dragged to their exact spots before the values are baked in.
+function remap(x: number, y: number): XY {
+  const nx = Math.min(394, Math.max(6, 200 + (x - 200) * 1.5));
+  const ny = Math.min(594, Math.max(6, 8 + (y - 15) * (584 / 869)));
+  return { x: Math.round(nx), y: Math.round(ny) };
+}
+
 export default function AcupointAtlas() {
   const [view, setView] = useState<View>("body");
   const [side, setSide] = useState<Side>("front");
@@ -24,6 +36,79 @@ export default function AcupointAtlas() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedSymptomId, setSelectedSymptomId] = useState<string | null>(null);
+
+  // Calibration mode (opt-in via ?cal=1): drag points onto the new figure.
+  const [calibrate, setCalibrate] = useState(false);
+  const [overrides, setOverrides] = useState<Record<string, XY>>({});
+  const [exportText, setExportText] = useState("");
+  const svgRef = useRef<SVGSVGElement>(null);
+  const dragId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setCalibrate(params.get("cal") === "1");
+    try {
+      const saved = localStorage.getItem("acu-cal");
+      if (saved) setOverrides(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  const resolve = useCallback(
+    (p: Point): XY => overrides[p.id] ?? remap(p.x, p.y),
+    [overrides]
+  );
+
+  function writeOverrides(next: Record<string, XY>) {
+    setOverrides(next);
+    try {
+      localStorage.setItem("acu-cal", JSON.stringify(next));
+    } catch {}
+  }
+
+  function svgCoords(e: React.PointerEvent): XY {
+    const svg = svgRef.current;
+    const m = svg?.getScreenCTM();
+    if (!svg || !m) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const r = pt.matrixTransform(m.inverse());
+    return { x: Math.round(r.x), y: Math.round(r.y) };
+  }
+
+  function onPointDown(e: React.PointerEvent, id: string) {
+    if (!calibrate) return;
+    e.stopPropagation();
+    dragId.current = id;
+    svgRef.current?.setPointerCapture(e.pointerId);
+  }
+  function onSvgMove(e: React.PointerEvent) {
+    if (!calibrate || !dragId.current) return;
+    writeOverrides({ ...overrides, [dragId.current]: svgCoords(e) });
+  }
+  function onSvgUp(e: React.PointerEvent) {
+    if (!dragId.current) return;
+    svgRef.current?.releasePointerCapture(e.pointerId);
+    dragId.current = null;
+  }
+
+  function doExport() {
+    const out: Record<string, XY> = {};
+    for (const p of POINTS) out[p.id] = resolve(p);
+    const text = JSON.stringify(out);
+    setExportText(text);
+    navigator.clipboard?.writeText(text).catch(() => {});
+  }
+
+  const calBtn: React.CSSProperties = {
+    padding: "6px 12px",
+    border: "1px solid #2b2620",
+    borderRadius: 16,
+    background: "transparent",
+    fontSize: 12,
+    cursor: "pointer",
+  };
 
   const term = search.trim().toLowerCase();
 
@@ -158,14 +243,18 @@ export default function AcupointAtlas() {
           {view === "body" ? (
             <>
               <svg
+                ref={svgRef}
                 className={s.bodyChart}
-                viewBox="0 0 400 900"
+                viewBox="0 0 400 600"
                 xmlns="http://www.w3.org/2000/svg"
+                onPointerMove={onSvgMove}
+                onPointerUp={onSvgUp}
               >
                 <BodyFigure side={side} />
                 <g>
                   {POINTS.filter((p) => p.view === side).map((p) => {
-                    const visible = matchesPoint(p);
+                    const visible = calibrate || matchesPoint(p);
+                    const c = resolve(p);
                     return (
                       <g
                         key={p.id}
@@ -175,15 +264,17 @@ export default function AcupointAtlas() {
                         style={{
                           opacity: visible ? 1 : 0.15,
                           pointerEvents: visible ? "auto" : "none",
+                          cursor: calibrate ? "grab" : "pointer",
                         }}
                         onClick={() => setSelectedId(p.id)}
+                        onPointerDown={(e) => onPointDown(e, p.id)}
                       >
-                        <circle className={s.halo} cx={p.x} cy={p.y} r={9} />
-                        <circle className={s.core} cx={p.x} cy={p.y} r={6} />
+                        <circle className={s.halo} cx={c.x} cy={c.y} r={9} />
+                        <circle className={s.core} cx={c.x} cy={c.y} r={6} />
                         <text
-                          x={p.x + (p.x < 200 ? -12 : 12)}
-                          y={p.y + 4}
-                          textAnchor={p.x < 200 ? "end" : "start"}
+                          x={c.x + (c.x < 200 ? -12 : 12)}
+                          y={c.y + 4}
+                          textAnchor={c.x < 200 ? "end" : "start"}
                         >
                           {p.name}
                         </text>
@@ -195,6 +286,51 @@ export default function AcupointAtlas() {
               <p className={s.stageHint}>
                 點擊圖上的紅點查看穴位資料；選取後變為綠點。可切換正面／背面，或使用上方搜尋與左側經絡篩選。
               </p>
+              {calibrate && (
+                <div
+                  style={{
+                    width: "100%",
+                    maxWidth: 420,
+                    marginTop: 10,
+                    fontSize: 12,
+                    lineHeight: 1.7,
+                    background: "#fff",
+                    border: "1px solid #d8cbb4",
+                    borderRadius: 8,
+                    padding: 12,
+                  }}
+                >
+                  <strong>校準模式</strong>：拖曳紅點對準穴位（目前：
+                  {side === "front" ? "正面" : "背面"}）。正面、背面都校準完後按
+                  「匯出座標」，把方塊內的整段文字貼回給我。
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button type="button" onClick={doExport} style={calBtn}>
+                      匯出座標
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => writeOverrides({})}
+                      style={calBtn}
+                    >
+                      全部重設
+                    </button>
+                  </div>
+                  {exportText && (
+                    <textarea
+                      readOnly
+                      value={exportText}
+                      onFocus={(e) => e.currentTarget.select()}
+                      style={{
+                        width: "100%",
+                        height: 90,
+                        marginTop: 8,
+                        fontSize: 11,
+                        fontFamily: "monospace",
+                      }}
+                    />
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <div className={s.symptomGrid}>
