@@ -13,6 +13,11 @@ import {
   type Point,
 } from "@/lib/acupoints";
 
+// Where the "back to Workspace" button sends the user. Overridable per
+// environment via NEXT_PUBLIC_WORKSPACE_URL; defaults to the Gateway origin.
+const WORKSPACE_URL =
+  process.env.NEXT_PUBLIC_WORKSPACE_URL ?? "https://workspace-gateway.vercel.app/";
+
 type View = "body" | "symptom";
 type Side = "front" | "back";
 
@@ -154,6 +159,9 @@ export default function AcupointAtlas() {
           穴道<span>圖典</span>
         </h1>
         <p>互動經絡圖 · 全身穴位與症狀方劑對照</p>
+        <a className={s.workspaceBtn} href={WORKSPACE_URL}>
+          ← 回工作區
+        </a>
         <div className={s.tabs}>
           <button
             className={`${s.tabBtn} ${view === "body" ? s.active : ""}`}

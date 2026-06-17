@@ -47,7 +47,26 @@
 .tabs {
   display: flex;
   gap: 8px;
+  margin-left: 10px;
+}
+.workspaceBtn {
   margin-left: auto;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: transparent;
+  font-family: "Noto Serif TC", serif;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: 0.15s;
+}
+.workspaceBtn:hover {
+  border-color: var(--cinnabar);
+  color: var(--cinnabar);
 }
 .tabBtn {
   padding: 8px 18px;
