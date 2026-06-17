@@ -194,10 +194,98 @@
   background: var(--ink);
   color: var(--paper);
 }
-.bodyChart {
+.chartArea {
+  position: relative;
   width: 100%;
   max-width: 420px;
+  align-self: center;
+}
+.bodyChart {
+  width: 100%;
+  display: block;
   touch-action: manipulation;
+}
+.zoomControls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+.zoomControls button {
+  width: 30px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--ink);
+}
+.zoomControls button:hover:not(:disabled) {
+  background: var(--paper-deep);
+}
+.zoomControls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.zoomLevel {
+  font-size: 10px;
+  text-align: center;
+  color: var(--ink-soft);
+  user-select: none;
+}
+.calToggle {
+  padding: 10px 16px;
+  border: 1px solid var(--bamboo);
+  border-radius: 20px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+.calToggle.active {
+  background: var(--cinnabar);
+  border-color: var(--cinnabar);
+  color: #fff;
+}
+.calPanel {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.7;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+.calRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.calStatus {
+  margin-top: 8px;
+  color: var(--cinnabar);
+  font-size: 11.5px;
+}
+.calList {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  line-height: 1.6;
 }
 .point {
   cursor: pointer;

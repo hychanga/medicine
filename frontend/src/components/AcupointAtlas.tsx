@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import BodyFigure from "./BodyFigure";
 import s from "./atlas.module.css";
 import { getNote, saveNote } from "@/lib/notesApi";
+import { getCoordOverrides, saveCoord } from "@/lib/acupointsApi";
 import {
   MERIDIAN_COLORS,
   POINTS,
@@ -46,68 +47,190 @@ export default function AcupointAtlas() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedSymptomId, setSelectedSymptomId] = useState<string | null>(null);
 
-  // Calibration mode (opt-in via ?cal=1): drag points onto the new figure.
+  // ---- Calibration (admin-only) + zoom / pan ----
+  const { data: session } = useSession();
+  const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "hychanga@gmail.com")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const isAdmin =
+    !!session?.user?.email &&
+    adminEmails.includes(session.user.email.toLowerCase());
+
   const [calibrate, setCalibrate] = useState(false);
-  const [overrides, setOverrides] = useState<Record<string, XY>>({});
-  const [exportText, setExportText] = useState("");
+  // Calibrated coordinates fetched from the backend (global, shared by all).
+  const [serverCoords, setServerCoords] = useState<Record<string, XY>>({});
+  // Local unsaved drags, pending a save to the database.
+  const [pending, setPending] = useState<Record<string, XY>>({});
+  const [saving, setSaving] = useState(false);
+  const [calStatus, setCalStatus] = useState("");
+
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState<XY>({ x: 0, y: 0 });
+
   const svgRef = useRef<SVGSVGElement>(null);
   const dragId = useRef<string | null>(null);
+  const panRef = useRef<{ sx: number; sy: number; px: number; py: number } | null>(
+    null
+  );
+  // Mirror of zoom/pan for event handlers (avoids stale closures).
+  const viewRef = useRef({ zoom: 1, pan: { x: 0, y: 0 } });
+  viewRef.current = { zoom, pan };
 
+  // Calibration is only truly active for an admin.
+  const calOn = calibrate && isAdmin;
+
+  // Load global calibrated coordinates once.
+  useEffect(() => {
+    getCoordOverrides()
+      .then(setServerCoords)
+      .catch(() => {});
+  }, []);
+
+  // Honour ?cal=1 (the toolbar toggle also drives `calibrate`).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    setCalibrate(params.get("cal") === "1");
-    try {
-      const saved = localStorage.getItem("acu-cal");
-      if (saved) setOverrides(JSON.parse(saved));
-    } catch {}
+    if (params.get("cal") === "1") setCalibrate(true);
   }, []);
 
   const resolve = useCallback(
-    (p: Point): XY => overrides[p.id] ?? remap(p.x, p.y),
-    [overrides]
+    (p: Point): XY => pending[p.id] ?? serverCoords[p.id] ?? remap(p.x, p.y),
+    [pending, serverCoords]
   );
 
-  function writeOverrides(next: Record<string, XY>) {
-    setOverrides(next);
-    try {
-      localStorage.setItem("acu-cal", JSON.stringify(next));
-    } catch {}
-  }
-
-  function svgCoords(e: React.PointerEvent): XY {
+  function svgCoords(clientX: number, clientY: number): XY {
     const svg = svgRef.current;
     const m = svg?.getScreenCTM();
     if (!svg || !m) return { x: 0, y: 0 };
     const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
+    pt.x = clientX;
+    pt.y = clientY;
     const r = pt.matrixTransform(m.inverse());
     return { x: Math.round(r.x), y: Math.round(r.y) };
   }
 
+  const clampPan = useCallback((p: XY, z: number): XY => {
+    const w = 400 / z;
+    const h = 600 / z;
+    return {
+      x: Math.min(Math.max(0, p.x), 400 - w),
+      y: Math.min(Math.max(0, p.y), 600 - h),
+    };
+  }, []);
+
+  const applyZoom = useCallback(
+    (nextZoom: number, focal?: { relX: number; relY: number }) => {
+      const z0 = viewRef.current.zoom;
+      const p0 = viewRef.current.pan;
+      const z = Math.min(6, Math.max(1, Math.round(nextZoom * 100) / 100));
+      const fx = focal?.relX ?? 0.5;
+      const fy = focal?.relY ?? 0.5;
+      // Keep the focal point fixed on screen while zooming.
+      const sx = p0.x + fx * (400 / z0);
+      const sy = p0.y + fy * (600 / z0);
+      setZoom(z);
+      setPan(
+        z === 1
+          ? { x: 0, y: 0 }
+          : clampPan({ x: sx - fx * (400 / z), y: sy - fy * (600 / z) }, z)
+      );
+    },
+    [clampPan]
+  );
+
+  // Wheel-to-zoom about the cursor (non-passive so we can preventDefault).
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      const relX = (e.clientX - rect.left) / rect.width;
+      const relY = (e.clientY - rect.top) / rect.height;
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      applyZoom(viewRef.current.zoom * factor, { relX, relY });
+    };
+    svg.addEventListener("wheel", onWheel, { passive: false });
+    return () => svg.removeEventListener("wheel", onWheel);
+  }, [applyZoom]);
+
   function onPointDown(e: React.PointerEvent, id: string) {
-    if (!calibrate) return;
+    if (!calOn) return;
     e.stopPropagation();
     dragId.current = id;
     svgRef.current?.setPointerCapture(e.pointerId);
   }
-  function onSvgMove(e: React.PointerEvent) {
-    if (!calibrate || !dragId.current) return;
-    writeOverrides({ ...overrides, [dragId.current]: svgCoords(e) });
-  }
-  function onSvgUp(e: React.PointerEvent) {
-    if (!dragId.current) return;
-    svgRef.current?.releasePointerCapture(e.pointerId);
-    dragId.current = null;
+
+  function onSvgPointerDown(e: React.PointerEvent) {
+    // Background press → pan (only meaningful when zoomed in).
+    if (dragId.current || viewRef.current.zoom <= 1) return;
+    panRef.current = {
+      sx: e.clientX,
+      sy: e.clientY,
+      px: viewRef.current.pan.x,
+      py: viewRef.current.pan.y,
+    };
+    svgRef.current?.setPointerCapture(e.pointerId);
   }
 
-  function doExport() {
-    const out: Record<string, XY> = {};
-    for (const p of POINTS) out[p.id] = resolve(p);
-    const text = JSON.stringify(out);
-    setExportText(text);
-    navigator.clipboard?.writeText(text).catch(() => {});
+  function onSvgMove(e: React.PointerEvent) {
+    if (dragId.current) {
+      const id = dragId.current;
+      const xy = svgCoords(e.clientX, e.clientY);
+      setPending((prev) => ({ ...prev, [id]: xy }));
+      return;
+    }
+    if (panRef.current) {
+      const svg = svgRef.current;
+      if (!svg) return;
+      const rect = svg.getBoundingClientRect();
+      const z = viewRef.current.zoom;
+      const dx = ((e.clientX - panRef.current.sx) / rect.width) * (400 / z);
+      const dy = ((e.clientY - panRef.current.sy) / rect.height) * (600 / z);
+      setPan(clampPan({ x: panRef.current.px - dx, y: panRef.current.py - dy }, z));
+    }
+  }
+
+  function onSvgUp(e: React.PointerEvent) {
+    if (dragId.current || panRef.current) {
+      svgRef.current?.releasePointerCapture(e.pointerId);
+    }
+    dragId.current = null;
+    panRef.current = null;
+  }
+
+  const pendingIds = Object.keys(pending);
+
+  async function saveCalibration() {
+    if (!pendingIds.length) return;
+    setSaving(true);
+    setCalStatus("儲存中⋯");
+    try {
+      for (const id of pendingIds) {
+        const p = POINTS.find((x) => x.id === id);
+        if (!p) continue;
+        const xy = pending[id];
+        await saveCoord(id, p.view, xy.x, xy.y);
+      }
+      setServerCoords((prev) => ({ ...prev, ...pending }));
+      setPending({});
+      setCalStatus(`已儲存 ${pendingIds.length} 筆座標到資料庫`);
+    } catch {
+      setCalStatus("儲存失敗（需管理員權限，或網路問題）");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function revertCalibration() {
+    setPending({});
+    setCalStatus("已還原未儲存的變更");
+  }
+
+  function resetZoom() {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   }
 
   const calBtn: React.CSSProperties = {
@@ -250,19 +373,64 @@ export default function AcupointAtlas() {
                 </button>
               </div>
             )}
+            {view === "body" && isAdmin && (
+              <button
+                className={`${s.calToggle} ${calOn ? s.active : ""}`}
+                onClick={() => {
+                  setCalibrate((c) => !c);
+                  setCalStatus("");
+                }}
+              >
+                {calOn ? "結束校準" : "校準"}
+              </button>
+            )}
           </div>
 
           {view === "body" ? (
             <>
-              <svg
-                ref={svgRef}
-                className={s.bodyChart}
-                viewBox="0 0 400 600"
-                xmlns="http://www.w3.org/2000/svg"
-                onPointerMove={onSvgMove}
-                onPointerUp={onSvgUp}
-              >
-                <BodyFigure side={side} />
+              <div className={s.chartArea}>
+                <div className={s.zoomControls}>
+                  <button
+                    type="button"
+                    onClick={() => applyZoom(zoom + 0.5)}
+                    aria-label="放大"
+                  >
+                    ＋
+                  </button>
+                  <span className={s.zoomLevel}>{Math.round(zoom * 100)}%</span>
+                  <button
+                    type="button"
+                    onClick={() => applyZoom(zoom - 0.5)}
+                    aria-label="縮小"
+                  >
+                    －
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetZoom}
+                    aria-label="重設縮放"
+                    disabled={zoom === 1 && pan.x === 0 && pan.y === 0}
+                  >
+                    ⟲
+                  </button>
+                </div>
+                <svg
+                  ref={svgRef}
+                  className={s.bodyChart}
+                  viewBox={`${pan.x.toFixed(2)} ${pan.y.toFixed(2)} ${(
+                    400 / zoom
+                  ).toFixed(2)} ${(600 / zoom).toFixed(2)}`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{
+                    touchAction: "none",
+                    cursor: calOn ? "default" : zoom > 1 ? "grab" : "default",
+                  }}
+                  onPointerDown={onSvgPointerDown}
+                  onPointerMove={onSvgMove}
+                  onPointerUp={onSvgUp}
+                  onPointerCancel={onSvgUp}
+                >
+                  <BodyFigure side={side} />
                 <g style={{ pointerEvents: "none" }}>
                   {(() => {
                     const groups: Record<string, Point[]> = {};
@@ -301,7 +469,7 @@ export default function AcupointAtlas() {
                 </g>
                 <g>
                   {POINTS.filter((p) => p.view === side).map((p) => {
-                    const visible = calibrate || matchesPoint(p);
+                    const visible = calOn || matchesPoint(p);
                     const c = resolve(p);
                     return (
                       <g
@@ -312,7 +480,7 @@ export default function AcupointAtlas() {
                         style={{
                           opacity: visible ? 1 : 0.15,
                           pointerEvents: visible ? "auto" : "none",
-                          cursor: calibrate ? "grab" : "pointer",
+                          cursor: calOn ? "grab" : "pointer",
                         }}
                         onClick={() => setSelectedId(p.id)}
                         onPointerDown={(e) => onPointDown(e, p.id)}
@@ -330,52 +498,43 @@ export default function AcupointAtlas() {
                     );
                   })}
                 </g>
-              </svg>
+                </svg>
+              </div>
               <p className={s.stageHint}>
-                點擊圖上的紅點查看穴位資料；選取後變為綠點。可切換正面／背面，或使用上方搜尋與左側經絡篩選。
+                點擊紅點查看穴位資料（選取後變綠）。用右上角 ＋／－ 或滑鼠滾輪縮放，放大後可拖曳圖面平移，方便精準點選。
               </p>
-              {calibrate && (
-                <div
-                  style={{
-                    width: "100%",
-                    maxWidth: 420,
-                    marginTop: 10,
-                    fontSize: 12,
-                    lineHeight: 1.7,
-                    background: "#fff",
-                    border: "1px solid #d8cbb4",
-                    borderRadius: 8,
-                    padding: 12,
-                  }}
-                >
-                  <strong>校準模式</strong>：拖曳紅點對準穴位（目前：
-                  {side === "front" ? "正面" : "背面"}）。正面、背面都校準完後按
-                  「匯出座標」，把方塊內的整段文字貼回給我。
-                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button type="button" onClick={doExport} style={calBtn}>
-                      匯出座標
+              {calOn && (
+                <div className={s.calPanel}>
+                  <strong>校準模式（管理員）</strong>：拖曳紅點到正確穴位（目前
+                  {side === "front" ? "正面" : "背面"}）。放開後加入待儲存清單，按
+                  「儲存到資料庫」即更新全站座標。放大後校準更精準。
+                  <div className={s.calRow}>
+                    <button
+                      type="button"
+                      onClick={saveCalibration}
+                      disabled={saving || pendingIds.length === 0}
+                      style={calBtn}
+                    >
+                      儲存到資料庫
+                      {pendingIds.length ? `（${pendingIds.length}）` : ""}
                     </button>
                     <button
                       type="button"
-                      onClick={() => writeOverrides({})}
+                      onClick={revertCalibration}
+                      disabled={saving || pendingIds.length === 0}
                       style={calBtn}
                     >
-                      全部重設
+                      還原未儲存
                     </button>
                   </div>
-                  {exportText && (
-                    <textarea
-                      readOnly
-                      value={exportText}
-                      onFocus={(e) => e.currentTarget.select()}
-                      style={{
-                        width: "100%",
-                        height: 90,
-                        marginTop: 8,
-                        fontSize: 11,
-                        fontFamily: "monospace",
-                      }}
-                    />
+                  {calStatus && <div className={s.calStatus}>{calStatus}</div>}
+                  {pendingIds.length > 0 && (
+                    <div className={s.calList}>
+                      待儲存：
+                      {pendingIds
+                        .map((id) => POINTS.find((p) => p.id === id)?.name ?? id)
+                        .join("、")}
+                    </div>
                   )}
                 </div>
               )}

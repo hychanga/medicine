@@ -22,5 +22,9 @@ app:
     # Shared HS256 secret used to verify JWTs minted by the Next.js BFF.
     # Override in production via AUTH_SHARED_SECRET (must match the frontend).
     shared-secret: ${AUTH_SHARED_SECRET:dev-local-shared-secret-please-change-0123456789}
+  admin:
+    # Comma-separated emails allowed to write global acupoint calibrations.
+    # Override in production via APP_ADMIN_EMAILS.
+    emails: ${APP_ADMIN_EMAILS:hychanga@gmail.com}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:*}
