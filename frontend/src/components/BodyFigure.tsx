@@ -1,8 +1,10 @@
-// Realistic anatomy figures (front / back).
-// Source: Wikimedia Commons "Human body diagrams" by Mikael Häggström,
-// released under CC0 1.0 (public domain). Images were trimmed to the body
-// bounds and downscaled; the original white background is dropped onto the
-// parchment via mix-blend-mode: multiply.
+// Hand-drawn, flesh-toned line-art figures (front / back) in the style of the
+// classic meridian charts (cf. zenheart.com.tw/Meridian.php).
+// Source: Wikimedia Commons "Silhouette femme homme antérieur postérieur.svg"
+// by cdang (Christophe Dang Ngoc Chan), released under CC0 1.0 (public domain).
+// The male anterior/posterior outlines were extracted and the body interior
+// flood-filled with a warm flesh tone so our coloured meridian lines and
+// acupoints read clearly on top.
 //
 // The atlas SVG uses viewBox "0 0 400 600"; the image is fit inside it with
 // preserveAspectRatio="xMidYMid meet" so the whole body (incl. hands/feet)

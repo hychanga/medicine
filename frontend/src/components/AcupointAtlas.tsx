@@ -18,14 +18,11 @@ type Side = "front" | "back";
 
 type XY = { x: number; y: number };
 
-// Transitional: the old acupoint coordinates were tuned to a 0–400 × 0–900
-// hand-drawn figure. The new photo fills a 0–400 × 0–600 space, so we map the
-// old coords in as a rough starting position; calibration mode then lets the
-// points be dragged to their exact spots before the values are baked in.
+// Acupoint coordinates are stored directly in the atlas' 0–400 × 0–600 space,
+// calibrated to the line-art figure in BodyFigure. Calibration mode (?cal=1)
+// can still drag any point and export updated values.
 function remap(x: number, y: number): XY {
-  const nx = Math.min(394, Math.max(6, 200 + (x - 200) * 1.5));
-  const ny = Math.min(594, Math.max(6, 8 + (y - 15) * (584 / 869)));
-  return { x: Math.round(nx), y: Math.round(ny) };
+  return { x, y };
 }
 
 // Trailing number of a point id is its sequence along the meridian
