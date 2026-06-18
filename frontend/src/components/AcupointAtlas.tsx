@@ -490,8 +490,8 @@ export default function AcupointAtlas() {
                         onClick={() => setSelectedId(p.id)}
                         onPointerDown={(e) => onPointDown(e, p.id)}
                       >
-                        <circle className={s.halo} cx={0} cy={0} r={6} />
-                        <circle className={s.core} cx={0} cy={0} r={4} />
+                        <circle className={s.halo} cx={0} cy={0} r={5} />
+                        <circle className={s.core} cx={0} cy={0} r={3} />
                         <text
                           x={c.x < 200 ? -12 : 12}
                           y={4}
