@@ -156,8 +156,10 @@ export default function AcupointAtlas() {
   }, [applyZoom]);
 
   function onPointDown(e: React.PointerEvent, id: string) {
-    if (!calOn) return;
+    // Always stop the press reaching the SVG: when zoomed in the SVG would
+    // start a pan and capture the pointer, swallowing the point's click.
     e.stopPropagation();
+    if (!calOn) return;
     dragId.current = id;
     svgRef.current?.setPointerCapture(e.pointerId);
   }
