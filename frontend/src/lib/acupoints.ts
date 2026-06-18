@@ -266,6 +266,24 @@ export const POINTS: Point[] = [
   { id: "PC1", name: "天池", py: "Tiānchí", meridian: "手厥陰心包經", view: "front", x: 162, y: 168, location: "乳頭外側1寸，第四肋間隙。", action: "寬胸理氣、活血化瘀。", indications: "胸悶、心痛、脅肋脹痛、乳癰、瘰癧。" },
   { id: "LI13", name: "手五里", py: "Shǒuwǔlǐ", meridian: "手陽明大腸經", view: "front", x: 124, y: 222, location: "曲池上三寸，曲池與肩髃連線上。", action: "通經活絡、理氣散結。", indications: "肘臂攣痛、瘰癧、上肢不遂。" },
   { id: "LI12", name: "肘髎", py: "Zhǒuliáo", meridian: "手陽明大腸經", view: "front", x: 122, y: 232, location: "曲池外上方，肱骨外上髁上緣。", action: "舒筋活絡、通利關節。", indications: "肘臂部痠痛、麻木、攣急。" },
+  { id: "GB18", name: "承靈", py: "Chénglíng", meridian: "足少陽膽經", view: "front", x: 195, y: 11, location: "前髮際上4寸，正營後1.5寸。", action: "疏風清熱、通鼻竅。", indications: "頭痛、眩暈、鼻塞、鼻衄。" },
+  { id: "GB17", name: "正營", py: "Zhèngyíng", meridian: "足少陽膽經", view: "front", x: 193, y: 16, location: "前髮際上2.5寸，瞳孔直上（目窗後1寸）。", action: "平肝熄風、明目止痛。", indications: "頭痛、眩暈、目痛、齒痛。" },
+  { id: "LI19", name: "口禾髎", py: "Kǒuhéliáo", meridian: "手陽明大腸經", view: "front", x: 196, y: 70, location: "鼻孔外緣直下，平人中溝上1/3處。", action: "祛風開竅、通鼻。", indications: "鼻塞、鼻衄、口喎、面癱。" },
+  { id: "SI17", name: "天容", py: "Tiānróng", meridian: "手太陽小腸經", view: "front", x: 210, y: 80, location: "下頜角後方，胸鎖乳突肌前緣凹陷。", action: "利咽消腫、聰耳。", indications: "咽喉腫痛、耳鳴耳聾、頸項腫痛。" },
+  { id: "GB22", name: "淵腋", py: "Yuānyè", meridian: "足少陽膽經", view: "front", x: 148, y: 170, location: "腋中線上，第四肋間隙。", action: "寬胸理氣、消腫止痛。", indications: "胸滿、脅痛、腋下腫、上肢痺痛。" },
+  { id: "GB23", name: "輒筋", py: "Zhéjīn", meridian: "足少陽膽經", view: "front", x: 153, y: 172, location: "淵腋前一寸，第四肋間隙。", action: "降逆平喘、理氣寬胸。", indications: "胸脅痛、氣喘、嘔吐、吞酸。" },
+  { id: "SP20", name: "周榮", py: "Zhōuróng", meridian: "足太陰脾經", view: "front", x: 152, y: 150, location: "第二肋間隙，前正中線旁開6寸。", action: "宣肺平喘、理氣化痰。", indications: "咳嗽、氣逆、胸脅脹滿。" },
+  { id: "SP19", name: "胸鄉", py: "Xiōngxiāng", meridian: "足太陰脾經", view: "front", x: 151, y: 160, location: "第三肋間隙，前正中線旁開6寸。", action: "寬胸理氣、通絡止痛。", indications: "胸脅脹痛、引背痛。" },
+  { id: "SP18", name: "天溪", py: "Tiānxī", meridian: "足太陰脾經", view: "front", x: 150, y: 170, location: "第四肋間隙，前正中線旁開6寸。", action: "寬胸通乳、止咳。", indications: "胸痛、咳嗽、乳少、乳癰。" },
+  { id: "SP17", name: "食竇", py: "Shídòu", meridian: "足太陰脾經", view: "front", x: 150, y: 180, location: "第五肋間隙，前正中線旁開6寸。", action: "宣肺平喘、健脾和中。", indications: "胸脅脹痛、噯氣、腹脹、水腫。" },
+  { id: "SP16", name: "腹哀", py: "Fùāi", meridian: "足太陰脾經", view: "front", x: 158, y: 243, location: "臍上三寸，前正中線旁開4寸。", action: "健脾和胃、理氣調腸。", indications: "腹痛、消化不良、便秘、痢疾。" },
+  { id: "SP14", name: "腹結", py: "Fùjié", meridian: "足太陰脾經", view: "front", x: 160, y: 270, location: "臍下1.3寸，前正中線旁開4寸。", action: "溫脾止瀉、理氣。", indications: "腹痛、泄瀉、便秘、疝氣。" },
+  { id: "SP13", name: "府舍", py: "Fǔshè", meridian: "足太陰脾經", view: "front", x: 162, y: 288, location: "臍下4.3寸，前正中線旁開4寸。", action: "健脾理氣、散結止痛。", indications: "腹痛、疝氣、痞塊。" },
+  { id: "KI21", name: "幽門", py: "Yōumén", meridian: "足少陰腎經", view: "front", x: 192, y: 205, location: "臍上六寸，前正中線旁開0.5寸。", action: "健脾和胃、降逆止嘔。", indications: "腹痛、嘔吐、泄瀉、噯氣。" },
+  { id: "KI20", name: "腹通谷", py: "Fùtōnggǔ", meridian: "足少陰腎經", view: "front", x: 192, y: 221, location: "臍上五寸，前正中線旁開0.5寸。", action: "健脾和胃、寬胸安神。", indications: "腹痛、腹脹、嘔吐、心悸。" },
+  { id: "KI19", name: "陰都", py: "Yīndū", meridian: "足少陰腎經", view: "front", x: 192, y: 230, location: "臍上四寸，前正中線旁開0.5寸。", action: "調理腸胃、寬胸降逆。", indications: "腹脹、腸鳴、腹痛、便秘。" },
+  { id: "KI17", name: "商曲", py: "Shāngqū", meridian: "足少陰腎經", view: "front", x: 192, y: 249, location: "臍上二寸，前正中線旁開0.5寸。", action: "健脾和胃、理氣止痛。", indications: "腹痛、泄瀉、便秘、腹中積聚。" },
+  { id: "KI14", name: "四滿", py: "Sìmǎn", meridian: "足少陰腎經", view: "front", x: 192, y: 276, location: "臍下二寸，前正中線旁開0.5寸。", action: "理氣調經、利水。", indications: "月經不調、帶下、不孕、腹痛、水腫。" },
 
   // ---- BACK VIEW ----
   { id: "GV16", name: "風府", py: "Fēngfǔ", meridian: "督脈", view: "back", x: 200, y: 115, location: "後髮際正中直上一寸，枕骨下凹陷。", action: "祛風散邪、開竅醒腦。", indications: "頭痛、項強、感冒、中風失語。" },
@@ -360,6 +378,10 @@ export const POINTS: Point[] = [
   { id: "SI9", name: "肩貞", py: "Jiānzhēn", meridian: "手太陽小腸經", view: "back", x: 148, y: 178, location: "腋後紋頭直上1寸。", action: "舒筋活絡、聰耳。", indications: "肩臂疼痛、上肢不遂、耳鳴、瘰癧。" },
   { id: "TE14", name: "肩髎", py: "Jiānliáo", meridian: "手少陽三焦經", view: "back", x: 140, y: 150, location: "肩峰後下方，上臂外展時肩峰後下方凹陷。", action: "祛風濕、通經絡。", indications: "肩臂疼痛、上肢不遂、肩重不舉。" },
   { id: "TE15", name: "天髎", py: "Tiānliáo", meridian: "手少陽三焦經", view: "back", x: 165, y: 150, location: "肩胛骨上角上方，肩井與曲垣連線中點。", action: "祛風通絡、止痛。", indications: "肩臂痛、頸項強急、胸中煩滿。" },
+  { id: "LI16", name: "巨骨", py: "Jùgǔ", meridian: "手陽明大腸經", view: "back", x: 160, y: 135, location: "鎖骨肩峰端與肩胛岡之間凹陷處。", action: "通經活絡、消腫止痛。", indications: "肩臂疼痛、上肢不遂、瘰癧、癭氣。" },
+  { id: "TE13", name: "臑會", py: "Nàohuì", meridian: "手少陽三焦經", view: "back", x: 275, y: 195, location: "肩髎下三寸，三角肌後下緣。", action: "化痰散結、通絡止痛。", indications: "上肢痠痛、肩臂痛、癭氣、瘰癧。" },
+  { id: "TE12", name: "消濼", py: "Xiāoluò", meridian: "手少陽三焦經", view: "back", x: 282, y: 215, location: "清冷淵與臑會連線中點，肘尖上五寸。", action: "清熱安神、通絡止痛。", indications: "頭痛、項強、臂痛、齒痛。" },
+  { id: "TE11", name: "清冷淵", py: "Qīnglěngyuān", meridian: "手少陽三焦經", view: "back", x: 285, y: 225, location: "肘尖（尺骨鷹嘴）直上二寸。", action: "疏散風寒、通經活絡。", indications: "頭痛、肩臂痛不能舉。" },
 ];
 
 export const SYMPTOM_GROUPS: SymptomGroup[] = [
