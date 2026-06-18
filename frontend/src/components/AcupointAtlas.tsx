@@ -460,7 +460,7 @@ export default function AcupointAtlas() {
                             d={d}
                             fill="none"
                             stroke={MERIDIAN_COLORS[g.name] || "#8A8273"}
-                            strokeWidth={isSel ? 2.2 : 1.3}
+                            strokeWidth={isSel ? 1.2 : 0.7}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             opacity={meridian === "ALL" ? 0.3 : isSel ? 0.85 : 0.05}
