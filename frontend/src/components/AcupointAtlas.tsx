@@ -471,7 +471,12 @@ export default function AcupointAtlas() {
                 </g>
                 <g>
                   {POINTS.filter((p) => p.view === side).map((p) => {
-                    const visible = calOn || matchesPoint(p);
+                    // In calibration mode show every point, unless a meridian is
+                    // selected — then only that meridian, so you calibrate it
+                    // without the other points getting in the way.
+                    const visible = calOn
+                      ? meridian === "ALL" || p.meridian === meridian
+                      : matchesPoint(p);
                     const c = resolve(p);
                     return (
                       <g
