@@ -477,6 +477,9 @@ export default function AcupointAtlas() {
                         className={`${s.point} ${
                           p.id === selectedId ? s.selected : ""
                         }`}
+                        // Counter-scale the marker by 1/zoom so the dot and
+                        // label keep a constant on-screen size while zooming.
+                        transform={`translate(${c.x} ${c.y}) scale(${1 / zoom})`}
                         style={{
                           opacity: visible ? 1 : 0.15,
                           pointerEvents: visible ? "auto" : "none",
@@ -485,11 +488,11 @@ export default function AcupointAtlas() {
                         onClick={() => setSelectedId(p.id)}
                         onPointerDown={(e) => onPointDown(e, p.id)}
                       >
-                        <circle className={s.halo} cx={c.x} cy={c.y} r={9} />
-                        <circle className={s.core} cx={c.x} cy={c.y} r={6} />
+                        <circle className={s.halo} cx={0} cy={0} r={9} />
+                        <circle className={s.core} cx={0} cy={0} r={6} />
                         <text
-                          x={c.x + (c.x < 200 ? -12 : 12)}
-                          y={c.y + 4}
+                          x={c.x < 200 ? -12 : 12}
+                          y={4}
                           textAnchor={c.x < 200 ? "end" : "start"}
                         >
                           {p.name}
