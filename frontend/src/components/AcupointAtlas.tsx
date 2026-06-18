@@ -601,12 +601,55 @@ export default function AcupointAtlas() {
               selectedSymptomId={selectedSymptomId}
               onJump={jumpToPoint}
             />
+          ) : !selectedId && meridian !== "ALL" ? (
+            <MeridianDetail meridian={meridian} onJump={jumpToPoint} />
           ) : (
             <PointDetail selectedId={selectedId} />
           )}
         </aside>
       </div>
     </div>
+  );
+}
+
+function MeridianDetail({
+  meridian,
+  onJump,
+}: {
+  meridian: string;
+  onJump: (pointId: string) => void;
+}) {
+  const color = MERIDIAN_COLORS[meridian] || "#8A8273";
+  const pts = POINTS.filter((p) => p.meridian === meridian).sort(
+    (a, b) => seq(a.id) - seq(b.id)
+  );
+  const front = pts.filter((p) => p.view === "front").length;
+  const back = pts.length - front;
+
+  return (
+    <>
+      <h2>經絡資料</h2>
+      <div className={s.pointCard}>
+        <p className={s.nameCn}>{meridian}</p>
+        <span className={s.meridianTag} style={{ background: color }}>
+          本經 {pts.length} 穴
+        </span>
+        <section>
+          <h3>循行穴位（依序）</h3>
+          <div className={s.relatedPoints}>
+            {pts.map((p) => (
+              <button key={p.id} onClick={() => onJump(p.id)}>
+                {p.name} {p.id}
+              </button>
+            ))}
+          </div>
+        </section>
+        <p className={s.emptyState} style={{ paddingTop: 0 }}>
+          圖面上同色連線即為本經循行路徑（正面 {front} 穴 · 背面 {back} 穴）。
+          點選任一穴位即可查看定位、功效與主治。
+        </p>
+      </div>
+    </>
   );
 }
 
