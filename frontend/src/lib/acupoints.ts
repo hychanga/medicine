@@ -145,6 +145,22 @@ export const POINTS: Point[] = [
   { id: "GB41", name: "足臨泣", py: "Zúlínqì", meridian: "足少陽膽經", view: "front", x: 212, y: 574, location: "足背第四、五蹠骨結合部前方凹陷。", action: "疏肝熄風、調經止帶。", indications: "偏頭痛、目赤、脅痛、月經不調、足背腫痛。", special: "膽經輸穴 · 八脈交會(通帶脈)" },
   { id: "GB40", name: "丘墟", py: "Qiūxū", meridian: "足少陽膽經", view: "front", x: 224, y: 558, location: "外踝前下方，趾長伸肌腱外側凹陷。", action: "疏肝利膽、舒筋活絡。", indications: "脅痛、踝關節痛、頸項痛、下肢痿痺。", special: "膽經原穴" },
   { id: "KI1", name: "湧泉", py: "Yǒngquán", meridian: "足少陰腎經", view: "front", x: 182, y: 592, location: "足底前1/3凹陷處（蜷足時足心最凹點）。", action: "滋陰降火、開竅醒神、引火歸元。", indications: "頭頂痛、眩暈、失眠、咽喉痛、足心熱、昏厥急救。", special: "腎經井穴" },
+  { id: "LU8", name: "經渠", py: "Jīngqú", meridian: "手太陰肺經", view: "front", x: 102, y: 279, location: "腕橫紋上一寸，橈骨莖突與橈動脈之間。", action: "宣肺平喘、利咽止咳。", indications: "咳嗽、氣喘、胸痛、咽喉腫痛、腕痛。", special: "肺經經穴" },
+  { id: "LI2", name: "二間", py: "Èrjiān", meridian: "手陽明大腸經", view: "front", x: 92, y: 312, location: "食指本節（第二掌指關節）前橈側凹陷，赤白肉際。", action: "清熱瀉火、利咽消腫。", indications: "牙痛、咽喉腫痛、目昏、鼻衄。", special: "大腸經滎穴" },
+  { id: "LI3", name: "三間", py: "Sānjiān", meridian: "手陽明大腸經", view: "front", x: 95, y: 306, location: "食指本節後橈側凹陷處。", action: "清熱止痛、利咽。", indications: "牙痛、咽喉腫痛、目痛、腹脹、手背腫。", special: "大腸經輸穴" },
+  { id: "ST43", name: "陷谷", py: "Xiàngǔ", meridian: "足陽明胃經", view: "front", x: 197, y: 572, location: "足背第二、三蹠骨結合部前方凹陷。", action: "和胃行水、理氣止痛。", indications: "面浮身腫、腸鳴腹痛、足背腫痛。", special: "胃經輸穴" },
+  { id: "SP2", name: "大都", py: "Dàdū", meridian: "足太陰脾經", view: "front", x: 177, y: 582, location: "大趾本節前內側凹陷，赤白肉際。", action: "健脾和中、清熱化濕。", indications: "腹脹、胃痛、泄瀉、熱病無汗。", special: "脾經滎穴" },
+  { id: "SP5", name: "商丘", py: "Shāngqiū", meridian: "足太陰脾經", view: "front", x: 180, y: 560, location: "內踝前下方凹陷處。", action: "健脾化濕、通調腸胃。", indications: "腹脹、泄瀉、便秘、足踝痛、舌本強痛。", special: "脾經經穴" },
+  { id: "HT8", name: "少府", py: "Shàofǔ", meridian: "手少陰心經", view: "front", x: 113, y: 315, location: "掌心第四、五掌骨間，握拳時小指尖所指處。", action: "清心瀉火、寧神。", indications: "心悸、胸痛、手心熱、小便不利、陰癢。", special: "心經滎穴" },
+  { id: "HT4", name: "靈道", py: "Língdào", meridian: "手少陰心經", view: "front", x: 113, y: 283, location: "腕橫紋上1.5寸，尺側腕屈肌腱橈側緣。", action: "寧心安神、通絡。", indications: "心痛、心悸、暴喑、肘臂攣痛。", special: "心經經穴" },
+  { id: "SI2", name: "前谷", py: "Qiángǔ", meridian: "手太陽小腸經", view: "front", x: 119, y: 320, location: "小指本節（第五掌指關節）前尺側凹陷，赤白肉際。", action: "清熱利咽、通乳。", indications: "熱病、乳少、咽喉腫痛、手指麻木。", special: "小腸經滎穴" },
+  { id: "KI2", name: "然谷", py: "Rángǔ", meridian: "足少陰腎經", view: "front", x: 180, y: 564, location: "足內側，舟骨粗隆下方凹陷處。", action: "滋陰補腎、清熱利濕。", indications: "月經不調、遺精、消渴、咽喉腫痛、足跗腫。", special: "腎經滎穴" },
+  { id: "KI7", name: "復溜", py: "Fùliū", meridian: "足少陰腎經", view: "front", x: 185, y: 528, location: "太溪直上二寸，跟腱前緣。", action: "補腎益陰、利水消腫。", indications: "水腫、盜汗、自汗、泄瀉、腰脊強痛。", special: "腎經經穴" },
+  { id: "KI10", name: "陰谷", py: "Yīngǔ", meridian: "足少陰腎經", view: "front", x: 183, y: 428, location: "膕窩內側，半腱肌與半膜肌腱之間。", action: "益腎調經、清利下焦。", indications: "陽痿、小便難、月經不調、膝膕內側痛。", special: "腎經合穴" },
+  { id: "PC5", name: "間使", py: "Jiānshǐ", meridian: "手厥陰心包經", view: "front", x: 113, y: 262, location: "腕橫紋上三寸，掌長肌腱與橈側腕屈肌腱之間。", action: "寬胸理氣、寧心安神。", indications: "心痛、心悸、胃痛、嘔吐、瘧疾、癲狂。", special: "心包經經穴" },
+  { id: "GB43", name: "俠溪", py: "Xiáxī", meridian: "足少陽膽經", view: "front", x: 210, y: 580, location: "足背第四、五趾間縫紋端，赤白肉際。", action: "清肝瀉火、聰耳明目。", indications: "偏頭痛、耳鳴耳聾、目赤、脅痛、足跗腫。", special: "膽經滎穴" },
+  { id: "GB38", name: "陽輔", py: "Yángfǔ", meridian: "足少陽膽經", view: "front", x: 232, y: 525, location: "外踝尖上四寸，腓骨前緣。", action: "清膽瀉火、舒筋活絡。", indications: "偏頭痛、目外眥痛、脅痛、下肢痿痺。", special: "膽經經穴" },
+  { id: "LR4", name: "中封", py: "Zhōngfēng", meridian: "足厥陰肝經", view: "front", x: 186, y: 560, location: "內踝前一寸，脛骨前肌腱內側凹陷。", action: "疏肝理氣、清利下焦。", indications: "疝氣、遺精、小便不利、內踝腫痛。", special: "肝經經穴" },
 
   // ---- BACK VIEW ----
   { id: "GV16", name: "風府", py: "Fēngfǔ", meridian: "督脈", view: "back", x: 200, y: 115, location: "後髮際正中直上一寸，枕骨下凹陷。", action: "祛風散邪、開竅醒腦。", indications: "頭痛、項強、感冒、中風失語。" },
@@ -176,6 +192,14 @@ export const POINTS: Point[] = [
   { id: "BL36", name: "承扶", py: "Chéngfú", meridian: "足太陽膀胱經", view: "back", x: 172, y: 332, location: "臀橫紋中點。", action: "舒筋活絡、通便消痔。", indications: "腰骶臀股痛、坐骨神經痛、痔疾。" },
   { id: "BL37", name: "殷門", py: "Yīnmén", meridian: "足太陽膀胱經", view: "back", x: 171, y: 372, location: "承扶下六寸，大腿後正中。", action: "舒筋通絡、強腰健膝。", indications: "腰背痛、下肢痿痺、坐骨神經痛。" },
   { id: "BL62", name: "申脈", py: "Shēnmài", meridian: "足太陽膀胱經", view: "back", x: 174, y: 550, location: "外踝直下方凹陷處。", action: "舒筋活絡、寧心安神。", indications: "頭痛、眩暈、失眠、癲癇、踝關節痛。", special: "八脈交會(通陽蹺脈)" },
+  { id: "BL66", name: "足通谷", py: "Zútōnggǔ", meridian: "足太陽膀胱經", view: "back", x: 162, y: 576, location: "足小趾本節前外側凹陷，赤白肉際。", action: "清熱安神、舒筋活絡。", indications: "頭痛、項強、目眩、鼻衄、癲狂。", special: "膀胱經滎穴" },
+  { id: "BL65", name: "束骨", py: "Shùgǔ", meridian: "足太陽膀胱經", view: "back", x: 165, y: 568, location: "足小趾本節後外側凹陷，赤白肉際。", action: "清熱散風、寧心通絡。", indications: "頭痛、項強、腰腿痛、癲狂。", special: "膀胱經輸穴" },
+  { id: "SI5", name: "陽谷", py: "Yánggǔ", meridian: "手太陽小腸經", view: "back", x: 295, y: 292, location: "腕背尺側，尺骨莖突與三角骨之間凹陷。", action: "清熱明目、舒筋。", indications: "頸頷腫痛、耳鳴耳聾、腕痛、熱病。", special: "小腸經經穴" },
+  { id: "SI8", name: "小海", py: "Xiǎohǎi", meridian: "手太陽小腸經", view: "back", x: 300, y: 238, location: "肘內側，尺骨鷹嘴與肱骨內上髁之間凹陷。", action: "清熱通絡、安神定志。", indications: "肘臂疼痛麻木、頭痛、癲癇。", special: "小腸經合穴" },
+  { id: "TE2", name: "液門", py: "Yèmén", meridian: "手少陽三焦經", view: "back", x: 300, y: 318, location: "手背第四、五指縫間，指蹼緣後方赤白肉際。", action: "清熱瀉火、聰耳利咽。", indications: "頭痛、目赤、耳鳴耳聾、咽喉腫痛、手臂痛。", special: "三焦經滎穴" },
+  { id: "TE3", name: "中渚", py: "Zhōngzhǔ", meridian: "手少陽三焦經", view: "back", x: 300, y: 308, location: "手背第四、五掌骨間，掌指關節後方凹陷。", action: "清熱通絡、開竅益聰。", indications: "頭痛、耳鳴耳聾、目赤、肩背痛、手指不能屈伸。", special: "三焦經輸穴" },
+  { id: "TE6", name: "支溝", py: "Zhīgōu", meridian: "手少陽三焦經", view: "back", x: 288, y: 258, location: "腕背橫紋上三寸，尺骨與橈骨之間。", action: "清三焦熱、通腑降逆。", indications: "便秘、脅肋痛、耳鳴耳聾、熱病、落枕。", special: "三焦經經穴" },
+  { id: "TE10", name: "天井", py: "Tiānjǐng", meridian: "手少陽三焦經", view: "back", x: 302, y: 233, location: "肘尖（尺骨鷹嘴）上一寸凹陷處。", action: "行氣散結、清熱通絡。", indications: "偏頭痛、肘臂痛、瘰癧、癲癇。", special: "三焦經合穴" },
 ];
 
 export const SYMPTOM_GROUPS: SymptomGroup[] = [
