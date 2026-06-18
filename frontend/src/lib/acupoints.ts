@@ -11,6 +11,8 @@ export interface Point {
   location: string;
   action: string;
   indications: string;
+  // Optional note for points whose取穴 or safety differs by sex / pregnancy.
+  genderNote?: string;
 }
 
 export interface Formula {
@@ -74,7 +76,7 @@ export const POINTS: Point[] = [
   { id: "KI27", name: "俞府", py: "Shùfǔ", meridian: "足少陰腎經", view: "front", x: 188, y: 120, location: "鎖骨下緣，前正中線旁開二寸。", action: "止咳平喘、和胃降逆。", indications: "咳嗽、氣喘、嘔吐、胸痛。" },
   { id: "LU1", name: "中府", py: "Zhōngfǔ", meridian: "手太陰肺經", view: "front", x: 167, y: 140, location: "鎖骨外側下方，第一肋間隙。", action: "宣肺理氣、止咳化痰。", indications: "咳嗽、氣喘、胸痛、肩背痛。" },
   { id: "LR14", name: "期門", py: "Qīmén", meridian: "足厥陰肝經", view: "front", x: 174, y: 196, location: "乳頭直下，第六肋間隙。", action: "疏肝理氣、健脾和胃。", indications: "胸脅脹痛、嘔吐、情緒鬱結。" },
-  { id: "CV17", name: "膻中", py: "Dànzhōng", meridian: "任脈", view: "front", x: 200, y: 166, location: "兩乳頭連線中點，胸骨正中。", action: "寬胸理氣、止咳化痰。", indications: "咳嗽、氣喘、胸悶、心悸、乳房脹痛。" },
+  { id: "CV17", name: "膻中", py: "Dànzhōng", meridian: "任脈", view: "front", x: 200, y: 166, location: "兩乳頭連線中點，胸骨正中。", action: "寬胸理氣、止咳化痰。", indications: "咳嗽、氣喘、胸悶、心悸、乳房脹痛。", genderNote: "定位男女有別：「兩乳頭連線中點」以男性為準；女性乳房位置因人而異，宜改以胸骨中線、平第 4 肋間（約第 4、5 肋間）取穴。" },
   { id: "CV12", name: "中脘", py: "Zhōngwǎn", meridian: "任脈", view: "front", x: 200, y: 212, location: "臍上四寸，前正中線上。", action: "健脾和胃、消食導滯。", indications: "胃痛、腹脹、消化不良、嘔吐。" },
   { id: "ST25", name: "天樞", py: "Tiānshū", meridian: "足陽明胃經", view: "front", x: 180, y: 238, location: "臍旁開二寸。", action: "調理腸胃、理氣消滯。", indications: "腹脹、腹瀉、便秘、月經不調。" },
   { id: "CV6", name: "氣海", py: "Qìhǎi", meridian: "任脈", view: "front", x: 200, y: 256, location: "臍下一寸半，前正中線上。", action: "補氣益腎、培補元氣。", indications: "腹痛、虛勞、月經不調、遺尿。" },
@@ -88,7 +90,7 @@ export const POINTS: Point[] = [
   { id: "LU7", name: "列缺", py: "Lièquē", meridian: "手太陰肺經", view: "front", x: 103, y: 285, location: "橈骨莖突上方，腕橫紋上1.5寸。", action: "宣肺解表、通調任脈。", indications: "咳嗽、氣喘、頭痛、頸項僵硬。" },
   { id: "LU9", name: "太淵", py: "Tàiyuān", meridian: "手太陰肺經", view: "front", x: 101, y: 288, location: "腕掌側橫紋橈側，橈動脈搏動處。", action: "補肺益氣、止咳化痰。", indications: "咳嗽、氣喘、無脈症、腕痛。" },
   { id: "HT7", name: "神門", py: "Shénmén", meridian: "手少陰心經", view: "front", x: 110, y: 291, location: "腕掌側橫紋尺側端凹陷。", action: "寧心安神、清心瀉火。", indications: "失眠、健忘、心悸、焦慮。" },
-  { id: "LI4", name: "合谷", py: "Hégǔ", meridian: "手陽明大腸經", view: "front", x: 97, y: 309, location: "手背第一、二掌骨間，第二掌骨橈側中點。", action: "疏風解表、清熱止痛。", indications: "頭痛、牙痛、感冒發熱、便秘（孕婦慎用）。" },
+  { id: "LI4", name: "合谷", py: "Hégǔ", meridian: "手陽明大腸經", view: "front", x: 97, y: 309, location: "手背第一、二掌骨間，第二掌骨橈側中點。", action: "疏風解表、清熱止痛。", indications: "頭痛、牙痛、感冒發熱、便秘（孕婦慎用）。", genderNote: "孕婦慎用／忌強刺激：與三陰交合用易催產、動胎氣，懷孕期間避免針刺或重按。" },
   { id: "PC8", name: "勞宮", py: "Láogōng", meridian: "手厥陰心包經", view: "front", x: 101, y: 316, location: "掌心，第二、三掌骨間，握拳中指尖處。", action: "清心瀉熱、開竅醒神。", indications: "口瘡、心煩、中暑、手心多汗。" },
   { id: "LU11", name: "少商", py: "Shàoshāng", meridian: "手太陰肺經", view: "front", x: 93, y: 301, location: "拇指橈側指甲角旁0.1寸。", action: "清肺利咽、開竅醒神。", indications: "咽喉腫痛、咳嗽、高熱昏迷。" },
   { id: "SI3", name: "後溪", py: "Hòuxī", meridian: "手太陽小腸經", view: "front", x: 108, y: 320, location: "手掌尺側，第五掌指關節後方紋頭凹陷。", action: "通督脈、清熱截瘧。", indications: "頸項強痛、落枕、腰背痛、耳聾。" },
@@ -97,7 +99,7 @@ export const POINTS: Point[] = [
   { id: "GB34", name: "陽陵泉", py: "Yánglíngquán", meridian: "足少陽膽經", view: "front", x: 242, y: 448, location: "膝下，腓骨頭前下方凹陷。", action: "疏肝利膽、舒筋活絡。", indications: "膝痛、坐骨神經痛、肝膽疾患、抽筋。" },
   { id: "ST36", name: "足三里", py: "Zúsānlǐ", meridian: "足陽明胃經", view: "front", x: 180, y: 453, location: "膝下三寸，脛骨前緣外一橫指。", action: "健脾和胃、補中益氣、扶正培元。", indications: "胃痛、消化不良、疲勞、養生保健第一要穴。" },
   { id: "SP9", name: "陰陵泉", py: "Yīnlíngquán", meridian: "足太陰脾經", view: "front", x: 187, y: 456, location: "小腿內側，脛骨內側髁後下方凹陷。", action: "健脾利水、消腫。", indications: "水腫、小便不利、膝痛、腹脹。" },
-  { id: "SP6", name: "三陰交", py: "Sānyīnjiāo", meridian: "足太陰脾經", view: "front", x: 181, y: 525, location: "內踝尖上三寸，脛骨內側緣後方。", action: "健脾益血、調補肝腎、安神。", indications: "月經不調、痛經、失眠、下肢水腫（孕婦禁針）。" },
+  { id: "SP6", name: "三陰交", py: "Sānyīnjiāo", meridian: "足太陰脾經", view: "front", x: 181, y: 525, location: "內踝尖上三寸，脛骨內側緣後方。", action: "健脾益血、調補肝腎、安神。", indications: "月經不調、痛經、失眠、下肢水腫（孕婦禁針）。", genderNote: "婦科要穴，但孕婦禁針、禁強刺激：易引發子宮收縮、動胎氣，懷孕期間務必避免。" },
   { id: "KI3", name: "太溪", py: "Tàixī", meridian: "足少陰腎經", view: "front", x: 185, y: 545, location: "內踝尖與跟腱之間凹陷處。", action: "滋補腎陰、培補元氣。", indications: "腰痛、耳鳴、失眠、足跟痛。" },
   { id: "KI6", name: "照海", py: "Zhàohǎi", meridian: "足少陰腎經", view: "front", x: 185, y: 553, location: "內踝尖下方凹陷處。", action: "滋陰清熱、調補沖任。", indications: "咽喉乾痛、失眠、月經不調。" },
   { id: "GB39", name: "懸鐘", py: "Xuánzhōng", meridian: "足少陽膽經", view: "front", x: 230, y: 535, location: "外踝尖上三寸，腓骨前緣。", action: "疏肝益腎、舒筋活絡。", indications: "頸項強痛、踝關節痛、下肢痿軟。" },

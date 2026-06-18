@@ -388,7 +388,7 @@ export default function AcupointAtlas() {
 
           {view === "body" ? (
             <>
-              <div className={s.chartArea}>
+              <div className={`${s.chartArea} ${calOn ? s.calibrating : ""}`}>
                 <div className={s.zoomControls}>
                   <button
                     type="button"
@@ -685,6 +685,15 @@ function PointDetail({ selectedId }: { selectedId: string | null }) {
           <h3>主治 Indications</h3>
           <p>{p.indications}</p>
         </section>
+        {p.genderNote && (
+          <div className={s.genderNote}>
+            <span aria-hidden="true">⚥</span>
+            <span>
+              <b>男女有別：</b>
+              {p.genderNote}
+            </span>
+          </div>
+        )}
         <div className={s.noteBox}>
           <h3>我的筆記</h3>
           {authed ? (
