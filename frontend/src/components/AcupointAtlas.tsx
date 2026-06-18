@@ -716,6 +716,15 @@ function PointDetail({ selectedId }: { selectedId: string | null }) {
         <span className={s.meridianTag} style={{ background: color }}>
           {p.meridian}
         </span>
+        {p.special && (
+          <div className={s.specialRow}>
+            {p.special.split(" · ").map((seg) => (
+              <span key={seg} className={s.specialTag}>
+                {seg}
+              </span>
+            ))}
+          </div>
+        )}
         <section>
           <h3>定位 Location</h3>
           <p>{p.location}</p>

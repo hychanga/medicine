@@ -296,6 +296,22 @@
   font-size: 11.5px;
   line-height: 1.6;
 }
+.specialRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+.specialTag {
+  font-size: 11.5px;
+  color: #8a6d2f;
+  background: #f6edd8;
+  border: 1px solid var(--bamboo);
+  border-radius: 12px;
+  padding: 2px 9px;
+  font-family: "Noto Serif TC", serif;
+  letter-spacing: 0.03em;
+}
 .genderNote {
   margin-top: 16px;
   display: flex;
