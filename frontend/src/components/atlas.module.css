@@ -194,6 +194,44 @@
   background: var(--ink);
   color: var(--paper);
 }
+.stageMain {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 18px;
+  width: 100%;
+}
+.stageMain > .chartArea {
+  flex: 1 1 320px;
+  width: auto;
+}
+.refPane {
+  flex: 1 1 280px;
+  min-width: 240px;
+  max-width: 520px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.refPane img {
+  width: 100%;
+  height: auto;
+  max-height: 78vh;
+  object-fit: contain;
+  border-radius: 6px;
+}
+.refCaption {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.5;
+}
 .chartArea {
   position: relative;
   width: 100%;

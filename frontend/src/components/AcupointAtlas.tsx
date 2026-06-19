@@ -46,6 +46,7 @@ export default function AcupointAtlas() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedSymptomId, setSelectedSymptomId] = useState<string | null>(null);
+  const [showRef, setShowRef] = useState(false);
 
   // ---- Calibration (admin-only) + zoom / pan ----
   const { data: session } = useSession();
@@ -386,10 +387,20 @@ export default function AcupointAtlas() {
                 {calOn ? "結束校準" : "校準"}
               </button>
             )}
+            {view === "body" && (
+              <button
+                className={`${s.calToggle} ${showRef ? s.active : ""}`}
+                onClick={() => setShowRef((v) => !v)}
+                title="顯示對照參考圖，與本圖並排比對"
+              >
+                {showRef ? "關閉對照" : "對照圖"}
+              </button>
+            )}
           </div>
 
           {view === "body" ? (
             <>
+              <div className={`${s.stageMain} ${showRef ? s.comparing : ""}`}>
               <div className={`${s.chartArea} ${calOn ? s.calibrating : ""}`}>
                 <div className={s.zoomControls}>
                   <button
@@ -509,6 +520,23 @@ export default function AcupointAtlas() {
                   })}
                 </g>
                 </svg>
+              </div>
+              {showRef && (
+                <div className={s.refPane}>
+                  <img
+                    src={
+                      side === "front"
+                        ? "/reference/xue-front.jpg"
+                        : "/reference/xue-back.jpg"
+                    }
+                    alt={side === "front" ? "正面對照圖" : "背面對照圖"}
+                  />
+                  <span className={s.refCaption}>
+                    對照參考圖（{side === "front" ? "正面" : "背面"}）·
+                    比例與本圖略異，僅供穴位位置對照
+                  </span>
+                </div>
+              )}
               </div>
               <p className={s.stageHint}>
                 點擊紅點查看穴位資料（選取後變綠）。用右上角 ＋／－ 或滑鼠滾輪縮放，放大後可拖曳圖面平移，方便精準點選。
