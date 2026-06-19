@@ -47,6 +47,7 @@ export default function AcupointAtlas() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedSymptomId, setSelectedSymptomId] = useState<string | null>(null);
   const [showRef, setShowRef] = useState(false);
+  const [refZoom, setRefZoom] = useState(1);
 
   // ---- Calibration (admin-only) + zoom / pan ----
   const { data: session } = useSession();
@@ -523,14 +524,46 @@ export default function AcupointAtlas() {
               </div>
               {showRef && (
                 <div className={s.refPane}>
-                  <img
-                    src={
-                      side === "front"
-                        ? "/reference/xue-front.jpg"
-                        : "/reference/xue-back.jpg"
-                    }
-                    alt={side === "front" ? "正面對照圖" : "背面對照圖"}
-                  />
+                  <div className={s.zoomControls}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRefZoom((z) => Math.min(5, Math.round((z + 0.5) * 100) / 100))
+                      }
+                      aria-label="對照圖放大"
+                    >
+                      ＋
+                    </button>
+                    <span className={s.zoomLevel}>{Math.round(refZoom * 100)}%</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRefZoom((z) => Math.max(1, Math.round((z - 0.5) * 100) / 100))
+                      }
+                      aria-label="對照圖縮小"
+                    >
+                      －
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRefZoom(1)}
+                      aria-label="對照圖重設縮放"
+                      disabled={refZoom === 1}
+                    >
+                      ⟲
+                    </button>
+                  </div>
+                  <div className={s.refScroll}>
+                    <img
+                      src={
+                        side === "front"
+                          ? "/reference/xue-front.jpg"
+                          : "/reference/xue-back.jpg"
+                      }
+                      alt={side === "front" ? "正面對照圖" : "背面對照圖"}
+                      style={{ width: `${refZoom * 100}%` }}
+                    />
+                  </div>
                   <span className={s.refCaption}>
                     對照參考圖（{side === "front" ? "正面" : "背面"}）·
                     比例與本圖略異，僅供穴位位置對照

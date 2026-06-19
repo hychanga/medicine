@@ -207,6 +207,7 @@
   width: auto;
 }
 .refPane {
+  position: relative;
   flex: 1 1 280px;
   min-width: 240px;
   max-width: 520px;
@@ -218,12 +219,17 @@
   flex-direction: column;
   align-items: center;
 }
-.refPane img {
+.refScroll {
   width: 100%;
-  height: auto;
   max-height: 78vh;
-  object-fit: contain;
+  overflow: auto;
   border-radius: 6px;
+}
+.refScroll img {
+  display: block;
+  height: auto;
+  /* width is set inline via refZoom; min keeps it filling the pane at 100% */
+  min-width: 100%;
 }
 .refCaption {
   margin-top: 6px;
