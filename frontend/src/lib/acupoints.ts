@@ -304,7 +304,7 @@ export const POINTS: Point[] = [
   { id: "GB32", name: "中瀆", py: "Zhōngdú", meridian: "足少陽膽經", view: "front", x: 150, y: 422, location: "風市下二寸，髂脛束後緣。", action: "祛風散寒、舒筋活絡。", indications: "下肢痿痺、麻木、半身不遂。" },
   { id: "GB33", name: "膝陽關", py: "Xīyángguān", meridian: "足少陽膽經", view: "front", x: 148, y: 438, location: "股骨外上髁上方凹陷，陽陵泉上三寸。", action: "疏利關節、祛風化濕。", indications: "膝膕腫痛攣急、小腿麻木。" },
   { id: "GV27", name: "兌端", py: "Duìduān", meridian: "督脈", view: "front", x: 200, y: 78, location: "上唇結節上緣中點，人中溝下端。", action: "寧神醒腦、清熱。", indications: "昏迷、癲狂、牙齦腫痛、口喎、鼻塞。" },
-  { id: "SI16", name: "天窗", py: "Tiānchuāng", meridian: "手太陽小腸經", view: "front", x: 190, y: 96, location: "喉結旁，胸鎖乳突肌後緣，扶突後方。", action: "聰耳利咽、寧神。", indications: "耳鳴耳聾、咽喉腫痛、頸項強痛、暴喑。" },
+  { id: "SI16", name: "天窗", py: "Tiānchuāng", meridian: "手太陽小腸經", view: "front", x: 212, y: 95, location: "喉結旁，胸鎖乳突肌後緣，扶突後方。", action: "聰耳利咽、寧神。", indications: "耳鳴耳聾、咽喉腫痛、頸項強痛、暴喑。" },
   { id: "TE22", name: "耳和髎", py: "Ěrhéliáo", meridian: "手少陽三焦經", view: "front", x: 224, y: 56, location: "鬢髮後緣，耳郭根前，顳淺動脈後緣。", action: "祛風通絡、消腫止痛。", indications: "頭重痛、耳鳴、牙關緊閉、面癱。" },
   { id: "ST20", name: "承滿", py: "Chéngmǎn", meridian: "足陽明胃經", view: "front", x: 179, y: 218, location: "臍上五寸，前正中線旁開2寸。", action: "和胃理氣、止痛。", indications: "胃痛、腹脹、腸鳴、食慾不振。" },
   { id: "GB27", name: "五樞", py: "Wǔshū", meridian: "足少陽膽經", view: "front", x: 152, y: 286, location: "髂前上棘前方0.5寸，平臍下三寸。", action: "調經止帶、通調下焦。", indications: "帶下、月經不調、少腹痛、疝氣、便秘。" },
