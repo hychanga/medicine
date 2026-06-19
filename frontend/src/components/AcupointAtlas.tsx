@@ -518,6 +518,13 @@ export default function AcupointAtlas() {
                       ? meridian === "ALL" || p.meridian === meridian
                       : matchesPoint(p);
                     const c = resolve(p);
+                    // When a single meridian is selected, show only its labels
+                    // and place them to the right of each point — avoids the
+                    // overlap you get with a dense column (e.g. 膀胱經 背俞).
+                    const selMer = meridian !== "ALL";
+                    const onSelMer = selMer && p.meridian === meridian;
+                    const showLabel = !selMer || onSelMer;
+                    const labelRight = onSelMer ? true : c.x >= 200;
                     return (
                       <g
                         key={p.id}
@@ -537,13 +544,15 @@ export default function AcupointAtlas() {
                       >
                         <circle className={s.halo} cx={0} cy={0} r={5} />
                         <circle className={s.core} cx={0} cy={0} r={3} />
-                        <text
-                          x={c.x < 200 ? -12 : 12}
-                          y={4}
-                          textAnchor={c.x < 200 ? "end" : "start"}
-                        >
-                          {p.name}
-                        </text>
+                        {showLabel && (
+                          <text
+                            x={labelRight ? 9 : -9}
+                            y={4}
+                            textAnchor={labelRight ? "start" : "end"}
+                          >
+                            {p.name}
+                          </text>
+                        )}
                       </g>
                     );
                   })}
