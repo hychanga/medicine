@@ -48,6 +48,34 @@ export default function AcupointAtlas() {
   const [selectedSymptomId, setSelectedSymptomId] = useState<string | null>(null);
   const [showRef, setShowRef] = useState(false);
   const [refZoom, setRefZoom] = useState(1);
+  const [refPan, setRefPan] = useState<XY>({ x: 0, y: 0 });
+  const refDrag = useRef<{ sx: number; sy: number; px: number; py: number } | null>(
+    null
+  );
+
+  function zoomRef(delta: number) {
+    // Zoom keeps the image centred (pan resets); drag to move afterwards.
+    setRefZoom((z) => Math.min(5, Math.max(1, Math.round((z + delta) * 100) / 100)));
+    setRefPan({ x: 0, y: 0 });
+  }
+  function onRefDown(e: React.PointerEvent) {
+    if (refZoom <= 1) return;
+    refDrag.current = { sx: e.clientX, sy: e.clientY, px: refPan.x, py: refPan.y };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function onRefMove(e: React.PointerEvent) {
+    if (!refDrag.current) return;
+    setRefPan({
+      x: refDrag.current.px + (e.clientX - refDrag.current.sx),
+      y: refDrag.current.py + (e.clientY - refDrag.current.sy),
+    });
+  }
+  function onRefUp(e: React.PointerEvent) {
+    if (refDrag.current) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      refDrag.current = null;
+    }
+  }
 
   // ---- Calibration (admin-only) + zoom / pan ----
   const { data: session } = useSession();
@@ -525,35 +553,33 @@ export default function AcupointAtlas() {
               {showRef && (
                 <div className={s.refPane}>
                   <div className={s.zoomControls}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRefZoom((z) => Math.min(5, Math.round((z + 0.5) * 100) / 100))
-                      }
-                      aria-label="對照圖放大"
-                    >
+                    <button type="button" onClick={() => zoomRef(0.5)} aria-label="對照圖放大">
                       ＋
                     </button>
                     <span className={s.zoomLevel}>{Math.round(refZoom * 100)}%</span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRefZoom((z) => Math.max(1, Math.round((z - 0.5) * 100) / 100))
-                      }
-                      aria-label="對照圖縮小"
-                    >
+                    <button type="button" onClick={() => zoomRef(-0.5)} aria-label="對照圖縮小">
                       －
                     </button>
                     <button
                       type="button"
-                      onClick={() => setRefZoom(1)}
+                      onClick={() => {
+                        setRefZoom(1);
+                        setRefPan({ x: 0, y: 0 });
+                      }}
                       aria-label="對照圖重設縮放"
-                      disabled={refZoom === 1}
+                      disabled={refZoom === 1 && refPan.x === 0 && refPan.y === 0}
                     >
                       ⟲
                     </button>
                   </div>
-                  <div className={s.refScroll}>
+                  <div
+                    className={s.refViewport}
+                    onPointerDown={onRefDown}
+                    onPointerMove={onRefMove}
+                    onPointerUp={onRefUp}
+                    onPointerCancel={onRefUp}
+                    style={{ cursor: refZoom > 1 ? "grab" : "default" }}
+                  >
                     <img
                       src={
                         side === "front"
@@ -561,7 +587,10 @@ export default function AcupointAtlas() {
                           : "/reference/xue-back.jpg"
                       }
                       alt={side === "front" ? "正面對照圖" : "背面對照圖"}
-                      style={{ width: `${refZoom * 100}%` }}
+                      draggable={false}
+                      style={{
+                        transform: `translate(${refPan.x}px, ${refPan.y}px) scale(${refZoom})`,
+                      }}
                     />
                   </div>
                   <span className={s.refCaption}>
