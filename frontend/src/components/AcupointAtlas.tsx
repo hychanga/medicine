@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import BodyFigure from "./BodyFigure";
 import s from "./atlas.module.css";
@@ -128,6 +128,28 @@ export default function AcupointAtlas() {
     (p: Point): XY => pending[p.id] ?? serverCoords[p.id] ?? remap(p.x, p.y),
     [pending, serverCoords]
   );
+
+  // When one meridian is selected, decide each label's side: if two points sit
+  // at the same vertical level (e.g. 膀胱經 inner/outer lines), the left point's
+  // name goes left and the right point's goes right; lone points use their side.
+  const labelSide = useMemo(() => {
+    const m: Record<string, "left" | "right"> = {};
+    if (meridian === "ALL") return m;
+    const pts = POINTS.filter(
+      (p) => p.view === side && p.meridian === meridian
+    ).map((p) => ({ id: p.id, ...resolve(p) }));
+    for (const p of pts) {
+      const lvl = pts.filter((q) => Math.abs(q.y - p.y) <= 6);
+      if (lvl.length >= 2) {
+        const minX = Math.min(...lvl.map((q) => q.x));
+        const maxX = Math.max(...lvl.map((q) => q.x));
+        m[p.id] = p.x - minX <= maxX - p.x ? "left" : "right";
+      } else {
+        m[p.id] = p.x < 200 ? "left" : "right";
+      }
+    }
+    return m;
+  }, [meridian, side, resolve]);
 
   function svgCoords(clientX: number, clientY: number): XY {
     const svg = svgRef.current;
@@ -524,7 +546,9 @@ export default function AcupointAtlas() {
                     const selMer = meridian !== "ALL";
                     const onSelMer = selMer && p.meridian === meridian;
                     const showLabel = !selMer || onSelMer;
-                    const labelRight = onSelMer ? true : c.x >= 200;
+                    const labelRight = onSelMer
+                      ? labelSide[p.id] === "right"
+                      : c.x >= 200;
                     return (
                       <g
                         key={p.id}
