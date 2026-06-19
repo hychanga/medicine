@@ -230,6 +230,9 @@
   height: auto;
   /* width is set inline via refZoom; min keeps it filling the pane at 100% */
   min-width: 100%;
+  /* override Tailwind preflight's img{max-width:100%}, which otherwise clamps
+     the zoomed width back to the container and cancels zoom. */
+  max-width: none;
 }
 .refCaption {
   margin-top: 6px;
