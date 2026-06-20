@@ -42,7 +42,7 @@ steps:
       - --platform=managed
       - --allow-unauthenticated
       - --set-env-vars=SPRING_PROFILES_ACTIVE=prod
-      - --set-secrets=SPRING_DATASOURCE_URL=tidb-url:latest,SPRING_DATASOURCE_USERNAME=tidb-username:latest,SPRING_DATASOURCE_PASSWORD=tidb-password:latest,AUTH_SHARED_SECRET=auth-shared-secret:latest
+      - --set-secrets=SPRING_DATASOURCE_URL=tidb-url:latest,SPRING_DATASOURCE_USERNAME=tidb-username:latest,SPRING_DATASOURCE_PASSWORD=tidb-password:latest,AUTH_SHARED_SECRET=auth-shared-secret:latest,GEMINI_API_KEY=gemini-api-key:latest
 
 options:
   logging: CLOUD_LOGGING_ONLY
