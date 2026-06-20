@@ -10,6 +10,9 @@ import LoginScreen from "./LoginScreen";
 // the Workspace SSO handoff (/sso) and the single-logout hop (/sso-logout).
 const BYPASS = new Set(["/sso", "/sso-logout"]);
 
+const WORKSPACE_URL =
+  process.env.NEXT_PUBLIC_WORKSPACE_URL ?? "https://workspace-gateway.vercel.app/";
+
 // Gates the whole app: until the user is signed in, only the login screen shows
 // (no nav, no protected content). The backend already rejects unauthenticated
 // /api calls — this keeps the UI consistent with that.
@@ -46,6 +49,18 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         >
           藥品庫存
         </Link>
+        <Link
+          href="/wellness"
+          className="rounded px-3 py-1 transition hover:bg-white/10"
+        >
+          🌿 養生
+        </Link>
+        <a
+          href={WORKSPACE_URL}
+          className="ml-auto rounded px-3 py-1 transition hover:bg-white/10"
+        >
+          ← 回工作區
+        </a>
         <AuthButton />
       </nav>
       {children}

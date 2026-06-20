@@ -6,12 +6,12 @@ export default function AuthButton() {
   const { data: session, status } = useSession();
 
   if (status === "loading") {
-    return <span className="ml-auto text-xs opacity-70">…</span>;
+    return <span className="text-xs opacity-70">…</span>;
   }
 
   if (session?.user) {
     return (
-      <div className="ml-auto flex items-center gap-2">
+      <div className="flex items-center gap-2">
         {session.user.image && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -36,7 +36,7 @@ export default function AuthButton() {
   return (
     <button
       onClick={() => signIn("google")}
-      className="ml-auto rounded bg-white/10 px-3 py-1 text-xs hover:bg-white/20"
+      className="rounded bg-white/10 px-3 py-1 text-xs hover:bg-white/20"
     >
       以 Google 登入
     </button>

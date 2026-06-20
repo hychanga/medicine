@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
 import {
   createWellness,
@@ -15,9 +14,6 @@ import {
   type WellnessInput,
   type WellnessResource,
 } from "@/lib/wellnessApi";
-
-const WORKSPACE_URL =
-  process.env.NEXT_PUBLIC_WORKSPACE_URL ?? "https://workspace-gateway.vercel.app/";
 
 const emptyForm: WellnessInput = {
   title: "",
@@ -169,22 +165,8 @@ export default function WellnessPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-center gap-3">
+      <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">🌿 養生知識庫</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <Link
-            href="/"
-            className="rounded-full border px-3 py-1.5 text-sm text-black/70 hover:border-emerald-500 hover:text-emerald-700"
-          >
-            ← 穴道圖典
-          </Link>
-          <a
-            href={WORKSPACE_URL}
-            className="rounded-full border px-3 py-1.5 text-sm text-black/70 hover:border-emerald-500 hover:text-emerald-700"
-          >
-            回工作區
-          </a>
-        </div>
       </header>
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
