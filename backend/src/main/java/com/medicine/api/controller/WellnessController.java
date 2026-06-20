@@ -3,6 +3,7 @@ package com.medicine.api.controller;
 import com.medicine.api.dto.WellnessRequest;
 import com.medicine.api.model.WellnessResource;
 import com.medicine.api.repository.WellnessResourceRepository;
+import com.medicine.api.service.GcsStorageService;
 import com.medicine.api.service.GeminiTagService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,13 +37,16 @@ public class WellnessController {
 
     private final WellnessResourceRepository repository;
     private final GeminiTagService tagService;
+    private final GcsStorageService storageService;
     private final Set<String> adminEmails;
 
     public WellnessController(WellnessResourceRepository repository,
                              GeminiTagService tagService,
+                             GcsStorageService storageService,
                              @Value("${app.admin.emails:}") String admins) {
         this.repository = repository;
         this.tagService = tagService;
+        this.storageService = storageService;
         this.adminEmails = Arrays.stream(admins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
@@ -101,6 +106,28 @@ public class WellnessController {
         }
         w.setTags(autoTags(w));
         return repository.save(w);
+    }
+
+    /**
+     * Mint a short-lived signed URL so the admin's browser can PUT a PDF
+     * straight to GCS (bypassing the proxy body limit). Body: {filename,
+     * contentType}. Returns {uploadUrl, publicUrl}.
+     */
+    @PostMapping("/upload-url")
+    public Map<String, String> uploadUrl(@AuthenticationPrincipal Jwt jwt,
+                                        @RequestBody Map<String, String> body) {
+        requireAdmin(jwt);
+        if (!storageService.isEnabled()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "尚未設定 GCS bucket");
+        }
+        String filename = body.getOrDefault("filename", "file.pdf");
+        String safe = filename.replaceAll("[^A-Za-z0-9._-]", "_");
+        if (safe.isBlank()) {
+            safe = "file.pdf";
+        }
+        String contentType = body.getOrDefault("contentType", "application/pdf");
+        String object = "wellness/uploads/" + System.currentTimeMillis() + "-" + safe;
+        return storageService.signedUpload(object, contentType);
     }
 
     @DeleteMapping("/{id}")

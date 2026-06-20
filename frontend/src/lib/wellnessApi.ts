@@ -81,6 +81,29 @@ export async function retagWellness(id: number): Promise<WellnessResource> {
   );
 }
 
+/** Upload a PDF straight to GCS via a backend-minted signed URL; returns the
+ *  public URL to store as pdfUrl. */
+export async function uploadPdf(file: File): Promise<string> {
+  const contentType = file.type || "application/pdf";
+  const { uploadUrl, publicUrl } = await handle<{
+    uploadUrl: string;
+    publicUrl: string;
+  }>(
+    await fetch(`${BASE}/upload-url`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename: file.name, contentType }),
+    })
+  );
+  const put = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: file,
+  });
+  if (!put.ok) throw new Error(`上傳失敗 (${put.status})`);
+  return publicUrl;
+}
+
 /** Best-effort YouTube embed URL from a watch/share/embed link. */
 export function youtubeEmbed(url: string | null): string | null {
   if (!url) return null;

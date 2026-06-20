@@ -32,5 +32,9 @@ app:
     # Override in production via GEMINI_API_KEY (store in Secret Manager).
     api-key: ${GEMINI_API_KEY:}
     model: ${GEMINI_MODEL:gemini-2.5-flash}
+  gcs:
+    # Public bucket holding 養生 PDFs. Admin uploads go straight to GCS via a
+    # short-lived signed URL minted by the backend.
+    bucket: ${GCS_BUCKET:medicine-wellness-880984423210}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:*}

@@ -10,6 +10,7 @@ import {
   retagWellness,
   splitTags,
   updateWellness,
+  uploadPdf,
   youtubeEmbed,
   type WellnessInput,
   type WellnessResource,
@@ -49,6 +50,23 @@ export default function WellnessPage() {
   const [editing, setEditing] = useState<WellnessResource | null>(null);
   const [form, setForm] = useState<WellnessInput>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function onPickPdf(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const url = await uploadPdf(file);
+      setForm((f) => ({ ...f, pdfUrl: url }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "PDF 上傳失敗");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
 
   const load = useCallback(async (query?: string) => {
     setLoading(true);
@@ -229,12 +247,31 @@ export default function WellnessPage() {
               placeholder="影片連結（YouTube 等）"
               className="rounded border px-3 py-2 text-sm"
             />
-            <input
-              value={form.pdfUrl ?? ""}
-              onChange={(e) => setForm({ ...form, pdfUrl: e.target.value })}
-              placeholder="PDF 連結（GCS 公開網址）"
-              className="rounded border px-3 py-2 text-sm"
-            />
+            <div className="flex flex-col gap-1">
+              <input
+                value={form.pdfUrl ?? ""}
+                onChange={(e) => setForm({ ...form, pdfUrl: e.target.value })}
+                placeholder="PDF 連結（或用下方上傳）"
+                className="rounded border px-3 py-2 text-sm"
+              />
+              <label className="text-xs text-black/60">
+                {uploading ? (
+                  <span className="text-emerald-700">PDF 上傳中⋯</span>
+                ) : (
+                  <>
+                    <span className="cursor-pointer text-emerald-700 underline">
+                      上傳 PDF 檔
+                    </span>
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={onPickPdf}
+                      className="hidden"
+                    />
+                  </>
+                )}
+              </label>
+            </div>
             <input
               value={form.category ?? ""}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
