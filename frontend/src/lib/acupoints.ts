@@ -314,9 +314,9 @@ export const POINTS: Point[] = [
 
   // ---- BACK VIEW ----
   { id: "GV16", name: "風府", py: "Fēngfǔ", meridian: "督脈", view: "back", x: 203, y: 99, location: "後髮際正中直上一寸，枕骨下凹陷。", action: "祛風散邪、開竅醒腦。", indications: "頭痛、項強、感冒、中風失語。" },
-  { id: "GB20", name: "風池", py: "Fēngchí", meridian: "足少陽膽經", view: "back", x: 187, y: 110, location: "後頸部，枕骨下，胸鎖乳突肌與斜方肌間凹陷。", action: "祛風解表、清頭明目。", indications: "頭痛、眩暈、感冒、頸項僵硬、失眠。" },
+  { id: "GB20", name: "風池", py: "Fēngchí", meridian: "足少陽膽經", view: "back", x: 183, y: 100, location: "後頸部，枕骨下，胸鎖乳突肌與斜方肌間凹陷。", action: "祛風解表、清頭明目。", indications: "頭痛、眩暈、感冒、頸項僵硬、失眠。" },
   { id: "GV14", name: "大椎", py: "Dàzhuī", meridian: "督脈", view: "back", x: 203, y: 116, location: "第七頸椎與第一胸椎棘突間凹陷。", action: "解表通陽、清熱截瘧。", indications: "感冒、發熱、咳嗽、頸背強痛。" },
-  { id: "GB21", name: "肩井", py: "Jiānjǐng", meridian: "足少陽膽經", view: "back", x: 165, y: 111, location: "肩上，大椎與肩峰連線中點。", action: "祛風清熱、活絡消腫。", indications: "肩頸痠痛、落枕、上肢不遂（孕婦禁針）。" },
+  { id: "GB21", name: "肩井", py: "Jiānjǐng", meridian: "足少陽膽經", view: "back", x: 162, y: 106, location: "肩上，大椎與肩峰連線中點。", action: "祛風清熱、活絡消腫。", indications: "肩頸痠痛、落枕、上肢不遂（孕婦禁針）。" },
   { id: "SI11", name: "天宗", py: "Tiānzōng", meridian: "手太陽小腸經", view: "back", x: 166, y: 161, location: "肩胛骨中央，肩胛岡下窩中點。", action: "舒筋活絡、理氣消腫。", indications: "肩背痠痛、肩周炎、乳房脹痛。" },
   { id: "BL13", name: "肺俞", py: "Fèishù", meridian: "足太陽膀胱經", view: "back", x: 185, y: 143, location: "第三胸椎棘突下，旁開1.5寸。", action: "宣肺理氣、止咳平喘。", indications: "咳嗽、氣喘、感冒、背痛。", special: "肺之背俞穴" },
   { id: "BL23", name: "腎俞", py: "Shènshù", meridian: "足太陽膀胱經", view: "back", x: 186, y: 247, location: "第二腰椎棘突下，旁開1.5寸。", action: "益腎助陽、強腰利水。", indications: "腰痛、耳鳴、遺尿、月經不調。", special: "腎之背俞穴" },
@@ -376,7 +376,7 @@ export const POINTS: Point[] = [
   { id: "GV6", name: "脊中", py: "Jǐzhōng", meridian: "督脈", view: "back", x: 203, y: 215, location: "第十一胸椎棘突下凹陷，後正中線上。", action: "健脾利濕、寧神鎮痙。", indications: "腹瀉、黃疸、痔疾、癲癇、腰脊強痛。" },
   { id: "GV2", name: "腰俞", py: "Yāoshù", meridian: "督脈", view: "back", x: 203, y: 305, location: "骶管裂孔正中，後正中線上。", action: "調經清熱、強腰利濕。", indications: "月經不調、痔疾、腰脊強痛、下肢痿痺、癲癇。" },
   { id: "BL10", name: "天柱", py: "Tiānzhù", meridian: "足太陽膀胱經", view: "back", x: 190, y: 106, location: "後髮際正中旁開1.3寸，斜方肌外緣凹陷。", action: "祛風通絡、清頭明目。", indications: "頭痛、項強、肩背痛、鼻塞、目眩。" },
-  { id: "GB12", name: "完骨", py: "Wángǔ", meridian: "足少陽膽經", view: "back", x: 186, y: 100, location: "耳後乳突後下方凹陷處。", action: "祛風清熱、寧神通絡。", indications: "頭痛、頸項強痛、失眠、面癱、齒痛。" },
+  { id: "GB12", name: "完骨", py: "Wángǔ", meridian: "足少陽膽經", view: "back", x: 185, y: 96, location: "耳後乳突後下方凹陷處。", action: "祛風清熱、寧神通絡。", indications: "頭痛、頸項強痛、失眠、面癱、齒痛。" },
   { id: "EX-HN16", name: "安眠", py: "Ānmián", meridian: "經外奇穴", view: "back", x: 190, y: 102, location: "翳風與風池連線中點。", action: "鎮靜安神、平肝潛陽。", indications: "失眠、頭痛、眩暈、心悸、煩躁。" },
   { id: "GV18", name: "強間", py: "Qiángjiān", meridian: "督脈", view: "back", x: 200, y: 88, location: "後髮際正中直上四寸（腦戶上1.5寸）。", action: "寧神鎮痙、平肝熄風。", indications: "頭痛、目眩、項強、癲狂、失眠。" },
   { id: "GV17", name: "腦戶", py: "Nǎohù", meridian: "督脈", view: "back", x: 200, y: 93, location: "枕外隆凸上緣凹陷，後髮際正中直上2.5寸。", action: "醒神開竅、平肝熄風。", indications: "頭痛、頭暈、項強、癲癇、失音。" },
