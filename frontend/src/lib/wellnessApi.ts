@@ -24,6 +24,21 @@ export interface WellnessInput {
   tags?: string | null;
 }
 
+// Suggested 養生 categories — a consistent taxonomy makes future data easier to
+// browse/search. The form still allows a custom value (datalist), so this list
+// can grow over time.
+export const WELLNESS_CATEGORIES = [
+  "食療藥膳",
+  "經絡穴位",
+  "四季養生",
+  "體質調理",
+  "臟腑保健",
+  "情志養生",
+  "運動導引",
+  "起居作息",
+  "常見病症",
+] as const;
+
 const BASE = "/api/wellness";
 
 async function handle<T>(res: Response): Promise<T> {

@@ -10,6 +10,7 @@ import {
   splitTags,
   updateWellness,
   uploadPdf,
+  WELLNESS_CATEGORIES,
   youtubeEmbed,
   type WellnessInput,
   type WellnessResource,
@@ -41,6 +42,7 @@ export default function WellnessPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<WellnessResource | null>(null);
@@ -82,12 +84,26 @@ export default function WellnessPage() {
     return () => clearTimeout(t);
   }, [search, load, authed]);
 
+  const categories = useMemo(() => {
+    const present = new Set(
+      items.map((w) => w.category).filter((c): c is string => !!c)
+    );
+    // Show the standard taxonomy first, then any extra custom ones in the data.
+    const ordered = WELLNESS_CATEGORIES.filter((c) => present.has(c));
+    const extra = [...present].filter(
+      (c) => !WELLNESS_CATEGORIES.includes(c as (typeof WELLNESS_CATEGORIES)[number])
+    );
+    return [...ordered, ...extra];
+  }, [items]);
+
   const shown = useMemo(
     () =>
-      activeTag
-        ? items.filter((w) => splitTags(w.tags).includes(activeTag))
-        : items,
-    [items, activeTag]
+      items.filter(
+        (w) =>
+          (!activeTag || splitTags(w.tags).includes(activeTag)) &&
+          (!activeCategory || w.category === activeCategory)
+      ),
+    [items, activeTag, activeCategory]
   );
 
   function openCreate() {
@@ -186,6 +202,34 @@ export default function WellnessPage() {
         )}
       </div>
 
+      {categories.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button
+            onClick={() => setActiveCategory(null)}
+            className={`rounded-full px-3 py-1 text-sm ${
+              activeCategory === null
+                ? "bg-emerald-600 text-white"
+                : "border text-black/70 hover:border-emerald-500"
+            }`}
+          >
+            全部
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setActiveCategory(activeCategory === c ? null : c)}
+              className={`rounded-full px-3 py-1 text-sm ${
+                activeCategory === c
+                  ? "bg-emerald-600 text-white"
+                  : "border text-black/70 hover:border-emerald-500"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+
       {activeTag && (
         <div className="mb-4 text-sm">
           篩選標籤：
@@ -255,11 +299,17 @@ export default function WellnessPage() {
               </label>
             </div>
             <input
+              list="wellness-categories"
               value={form.category ?? ""}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
-              placeholder="分類（例如：食療）"
+              placeholder="分類（選擇或自行輸入）"
               className="rounded border px-3 py-2 text-sm"
             />
+            <datalist id="wellness-categories">
+              {WELLNESS_CATEGORIES.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
             <input
               value={form.source ?? ""}
               onChange={(e) => setForm({ ...form, source: e.target.value })}
