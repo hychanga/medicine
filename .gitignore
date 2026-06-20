@@ -19,3 +19,6 @@ frontend/out/
 *.log
 
 .vercel
+
+# Local reference material (PDFs etc.) — not part of the app
+/data/

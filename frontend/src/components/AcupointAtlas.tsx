@@ -336,7 +336,14 @@ export default function AcupointAtlas() {
           穴道<span>圖典</span>
         </h1>
         <p>互動經絡圖 · 全身穴位與症狀方劑對照</p>
-        <a className={s.workspaceBtn} href={WORKSPACE_URL}>
+        <a className={s.workspaceBtn} href="/wellness">
+          🌿 養生
+        </a>
+        <a
+          className={s.workspaceBtn}
+          href={WORKSPACE_URL}
+          style={{ marginLeft: 0 }}
+        >
           ← 回工作區
         </a>
         <div className={s.tabs}>

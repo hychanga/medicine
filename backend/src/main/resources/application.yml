@@ -26,5 +26,11 @@ app:
     # Comma-separated emails allowed to write global acupoint calibrations.
     # Override in production via APP_ADMIN_EMAILS.
     emails: ${APP_ADMIN_EMAILS:hychanga@gmail.com}
+  gemini:
+    # Google Gemini API key for auto-tagging 養生 resources. When blank, tag
+    # generation is skipped and tags fall back to whatever is entered manually.
+    # Override in production via GEMINI_API_KEY (store in Secret Manager).
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-2.5-flash}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:*}
