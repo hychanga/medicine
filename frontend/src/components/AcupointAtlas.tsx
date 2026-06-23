@@ -16,6 +16,7 @@ import {
 
 type View = "body" | "symptom";
 type Side = "front" | "back";
+type MobileTab = "stage" | "sidebar" | "detail";
 
 type XY = { x: number; y: number };
 
@@ -44,6 +45,7 @@ export default function AcupointAtlas() {
   const [showRef, setShowRef] = useState(false);
   const [refZoom, setRefZoom] = useState(1);
   const [refPan, setRefPan] = useState<XY>({ x: 0, y: 0 });
+  const [mobileTab, setMobileTab] = useState<MobileTab>("stage");
   const refDrag = useRef<{ sx: number; sy: number; px: number; py: number } | null>(
     null
   );
@@ -118,6 +120,14 @@ export default function AcupointAtlas() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("cal") === "1") setCalibrate(true);
   }, []);
+
+  // On mobile, auto-switch to the detail panel when a point or symptom is selected.
+  useEffect(() => {
+    if (!(selectedId || selectedSymptomId)) return;
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches) {
+      setMobileTab("detail");
+    }
+  }, [selectedId, selectedSymptomId]);
 
   const resolve = useCallback(
     (p: Point): XY => pending[p.id] ?? serverCoords[p.id] ?? remap(p.x, p.y),
@@ -322,6 +332,7 @@ export default function AcupointAtlas() {
     setSearch("");
     setSelectedId(null);
     setSelectedSymptomId(null);
+    setMobileTab("stage");
   }
 
   return (
@@ -349,7 +360,7 @@ export default function AcupointAtlas() {
 
       <div className={s.layout}>
         {/* sidebar */}
-        <aside className={s.sidebar}>
+        <aside className={`${s.sidebar} ${mobileTab === "sidebar" ? s.mobileActive : ""}`}>
           {view === "body" ? (
             <>
               <h2>經絡 Meridians</h2>
@@ -392,7 +403,7 @@ export default function AcupointAtlas() {
         </aside>
 
         {/* stage */}
-        <section className={s.stage}>
+        <section className={`${s.stage} ${mobileTab === "stage" ? s.mobileActive : ""}`}>
           <div className={s.stageToolbar}>
             <input
               value={search}
@@ -720,7 +731,7 @@ export default function AcupointAtlas() {
         </section>
 
         {/* detail */}
-        <aside className={s.detail}>
+        <aside className={`${s.detail} ${mobileTab === "detail" ? s.mobileActive : ""}`}>
           {view === "symptom" ? (
             <SymptomDetail
               selectedSymptomId={selectedSymptomId}
@@ -733,6 +744,39 @@ export default function AcupointAtlas() {
           )}
         </aside>
       </div>
+
+      {/* ── Mobile bottom tab bar (hidden on desktop via CSS) ── */}
+      {(() => {
+        const hasDetail = !!(selectedId || selectedSymptomId || (view === "body" && meridian !== "ALL"));
+        return (
+          <nav className={s.mobileTabBar}>
+            <button
+              type="button"
+              className={`${s.mobileTabBtn} ${mobileTab === "sidebar" ? s.mobileTabActive : ""}`}
+              onClick={() => setMobileTab("sidebar")}
+            >
+              <span className={s.mobileTabIcon}>☰</span>
+              {view === "body" ? "經絡" : "分類"}
+            </button>
+            <button
+              type="button"
+              className={`${s.mobileTabBtn} ${mobileTab === "stage" ? s.mobileTabActive : ""}`}
+              onClick={() => setMobileTab("stage")}
+            >
+              <span className={s.mobileTabIcon}>⊙</span>
+              {view === "body" ? "穴道圖" : "症狀"}
+            </button>
+            <button
+              type="button"
+              className={`${s.mobileTabBtn} ${mobileTab === "detail" ? s.mobileTabActive : ""}`}
+              onClick={() => setMobileTab("detail")}
+            >
+              <span className={s.mobileTabIcon}>▤</span>
+              詳情{hasDetail && mobileTab !== "detail" ? <span style={{ color: "var(--cinnabar)", fontSize: 8, verticalAlign: "super" }}>●</span> : null}
+            </button>
+          </nav>
+        );
+      })()}
     </div>
   );
 }
