@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
+import RichTextEditor from "@/components/RichTextEditor";
 import {
   createWellness,
   deleteWellness,
@@ -259,12 +260,11 @@ export default function WellnessPage() {
             placeholder="標題 *（例如：「天然鈣片」的莧菜）"
             className="rounded border px-3 py-2 text-sm"
           />
-          <textarea
+          <RichTextEditor
+            key={editing?.id ?? "new"}
             value={form.summary ?? ""}
-            onChange={(e) => setForm({ ...form, summary: e.target.value })}
-            placeholder="概要"
-            rows={4}
-            className="rounded border px-3 py-2 text-sm"
+            onChange={(html) => setForm((f) => ({ ...f, summary: html }))}
+            placeholder="概要（可設定字型、顏色、底色等格式）"
           />
           <div className="grid gap-3 sm:grid-cols-2">
             <input
@@ -360,12 +360,23 @@ export default function WellnessPage() {
                   )}
                   <h2 className="text-lg font-bold">{w.title}</h2>
                   {w.source && <span className="text-xs text-black/50">· {w.source}</span>}
+                  {isAdmin && (
+                    <button
+                      onClick={() => openEdit(w)}
+                      className="ml-auto rounded-full border border-emerald-300 px-3 py-0.5 text-xs text-emerald-700 hover:bg-emerald-50"
+                    >
+                      ✎ 編輯
+                    </button>
+                  )}
                 </div>
 
                 <div className="mt-3 grid gap-4 md:grid-cols-[1fr_auto]">
                   <div>
                     {w.summary && (
-                      <p className="text-sm leading-relaxed text-black/80">{w.summary}</p>
+                      <div
+                        className="prose prose-sm max-w-none text-sm leading-relaxed text-black/80"
+                        dangerouslySetInnerHTML={{ __html: w.summary }}
+                      />
                     )}
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {splitTags(w.tags).map((tag) => (
