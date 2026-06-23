@@ -50,6 +50,7 @@ export default function WellnessPage() {
   const [form, setForm] = useState<WellnessInput>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [tagInput, setTagInput] = useState("");
 
   async function onPickPdf(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -110,6 +111,7 @@ export default function WellnessPage() {
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
+    setTagInput("");
     setShowForm(true);
   }
   function openEdit(w: WellnessResource) {
@@ -123,6 +125,7 @@ export default function WellnessPage() {
       source: w.source ?? "",
       tags: w.tags ?? "",
     });
+    setTagInput("");
     setShowForm(true);
   }
 
@@ -317,12 +320,55 @@ export default function WellnessPage() {
               className="rounded border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400"
             />
           </div>
-          <input
-            value={form.tags ?? ""}
-            onChange={(e) => setForm({ ...form, tags: e.target.value })}
-            placeholder="標籤（留空則由 AI 自動產生，逗號分隔）"
-            className="rounded border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400"
-          />
+          {/* Tag chip editor */}
+          {(() => {
+            const tags = splitTags(form.tags ?? "");
+            const removeTag = (i: number) =>
+              setForm((f) => ({ ...f, tags: tags.filter((_, j) => j !== i).join(",") }));
+            const commitTag = (raw: string) => {
+              const t = raw.trim();
+              if (!t || tags.includes(t)) return;
+              setForm((f) => ({ ...f, tags: [...tags, t].join(",") }));
+            };
+            return (
+              <div className="flex flex-wrap items-center gap-1.5 rounded border px-2 py-1.5 focus-within:border-emerald-500 dark:border-gray-600 dark:bg-gray-800">
+                {tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(i)}
+                      className="ml-0.5 leading-none text-emerald-600 hover:text-red-500 dark:text-emerald-400 dark:hover:text-red-400"
+                      aria-label={`移除 ${tag}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                <input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === ",") {
+                      e.preventDefault();
+                      commitTag(tagInput);
+                      setTagInput("");
+                    } else if (e.key === "Backspace" && !tagInput && tags.length) {
+                      removeTag(tags.length - 1);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (tagInput.trim()) { commitTag(tagInput); setTagInput(""); }
+                  }}
+                  placeholder={tags.length ? "" : "輸入標籤後按 Enter 或逗號新增（留空由 AI 產生）"}
+                  className="min-w-[8rem] flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                />
+              </div>
+            );
+          })()}
           <div className="flex gap-2">
             <button
               type="submit"
