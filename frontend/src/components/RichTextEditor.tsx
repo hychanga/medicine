@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const FONTS = [
   { label: "預設字型", value: "" },
@@ -19,6 +19,107 @@ const SIZES = [
   { label: "特大 32px", value: "32px" },
 ];
 
+// ── Preset colour palettes ───────────────────────────────────────────────────
+
+const FG_COLORS = [
+  // Grayscale
+  "#000000", "#374151", "#6b7280", "#9ca3af", "#d1d5db", "#ffffff",
+  // Vivid
+  "#dc2626", "#ea580c", "#ca8a04", "#16a34a", "#0284c7", "#7c3aed",
+  // Soft
+  "#f87171", "#fb923c", "#facc15", "#4ade80", "#38bdf8", "#c084fc",
+  // Deep / 中醫常用
+  "#7f1d1d", "#78350f", "#713f12", "#14532d", "#0c4a6e", "#4c1d95",
+];
+
+// "transparent" means "remove background"
+const BG_COLORS = [
+  "transparent",
+  "#fef9c3", "#dcfce7", "#dbeafe", "#fce7f3", "#f3e8ff",
+  "#fde68a", "#bbf7d0", "#bfdbfe", "#f9a8d4", "#d8b4fe", "#fed7aa",
+  "#fef08a", "#86efac", "#93c5fd", "#f472b6", "#a78bfa", "#fb923c",
+  "#facc15", "#4ade80", "#60a5fa", "#e879f9", "#818cf8", "#f97316",
+];
+
+// ── ColorPicker sub-component ────────────────────────────────────────────────
+
+interface CPProps {
+  label: React.ReactNode;
+  colors: string[];
+  defaultCustom: string;
+  onSelect: (color: string) => void;
+  title?: string;
+}
+
+function ColorPicker({ label, colors, defaultCustom, onSelect, title }: CPProps) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <button
+        type="button"
+        title={title}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => setOpen((o) => !o)}
+        className="flex select-none items-center gap-0.5 rounded px-1.5 py-0.5 text-xs hover:bg-black/10"
+      >
+        {label}
+        <span className="ml-0.5 text-gray-400">▾</span>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-lg border bg-white p-2 shadow-xl">
+          <div className="grid grid-cols-6 gap-1">
+            {colors.map((c) => (
+              <button
+                key={c}
+                type="button"
+                title={c === "transparent" ? "無底色" : c}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => { onSelect(c); setOpen(false); }}
+                className="h-5 w-5 rounded border border-gray-200 transition-transform hover:scale-125 hover:border-gray-400"
+                style={
+                  c === "transparent"
+                    ? {
+                        background:
+                          "linear-gradient(135deg,#fff 40%,#f87171 40%,#f87171 60%,#fff 60%)",
+                      }
+                    : { background: c }
+                }
+              />
+            ))}
+          </div>
+          <div className="mt-2 flex items-center gap-1.5 border-t pt-2">
+            <span className="text-xs text-gray-500">自訂</span>
+            <input
+              ref={inputRef}
+              type="color"
+              defaultValue={defaultCustom}
+              className="h-5 w-5 cursor-pointer rounded border border-gray-200 p-0"
+              onChange={(e) => onSelect(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main RichTextEditor ──────────────────────────────────────────────────────
+
 interface Props {
   value: string;
   onChange: (html: string) => void;
@@ -27,10 +128,10 @@ interface Props {
 
 /**
  * Lightweight contentEditable rich-text editor. Supports bold/italic/underline,
- * font family, font size, text colour, and background colour. Uses
- * document.execCommand (still functional in all major browsers despite the
- * "deprecated" spec status). The key prop on the parent should change when
- * switching between edit targets so the component remounts and reads the new value.
+ * font family, font size, text colour (24 presets + custom), background colour
+ * (23 presets + custom), and clear-formatting. Uses document.execCommand (still
+ * functional in all major browsers). Pass a new `key` when switching records so
+ * the component remounts and loads the correct initial value.
  */
 export default function RichTextEditor({
   value,
@@ -41,8 +142,6 @@ export default function RichTextEditor({
   const savedRange = useRef<Range | null>(null);
   const composing = useRef(false);
 
-  // Set initial HTML on mount only — changing `value` from outside does not
-  // reset cursor; use a new `key` prop to reinitialise for a different record.
   useEffect(() => {
     if (editorRef.current) {
       editorRef.current.innerHTML = value;
@@ -79,8 +178,6 @@ export default function RichTextEditor({
   function applyFontSize(size: string) {
     if (!size || !editorRef.current) return;
     restoreAndFocus();
-    // Marker trick: execCommand tags selection with <font size="7">, then we
-    // swap those elements for <span style="font-size: Xpx"> to get pixel values.
     document.execCommand("fontSize", false, "7");
     editorRef.current.querySelectorAll('font[size="7"]').forEach((el) => {
       const span = document.createElement("span");
@@ -99,9 +196,16 @@ export default function RichTextEditor({
 
   function applyBgColor(color: string) {
     restoreAndFocus();
-    // hiliteColor → Chrome; backColor → Firefox
-    if (!document.execCommand("hiliteColor", false, color)) {
-      document.execCommand("backColor", false, color);
+    if (color === "transparent") {
+      // Remove background by applying white then removeFormat is not enough;
+      // use the "inherited" transparent value explicitly.
+      if (!document.execCommand("hiliteColor", false, "rgba(0,0,0,0)")) {
+        document.execCommand("backColor", false, "rgba(0,0,0,0)");
+      }
+    } else {
+      if (!document.execCommand("hiliteColor", false, color)) {
+        document.execCommand("backColor", false, color);
+      }
     }
     emit();
   }
@@ -112,9 +216,8 @@ export default function RichTextEditor({
 
   return (
     <div className="overflow-hidden rounded border border-gray-300 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-400">
-      {/* ── Toolbar ─────────────────────────────────────────────────────── */}
+      {/* ── Toolbar ──────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-0.5 border-b bg-gray-50 px-1.5 py-1">
-        {/* Bold / Italic / Underline */}
         <button
           type="button"
           title="粗體 (Ctrl+B)"
@@ -145,7 +248,6 @@ export default function RichTextEditor({
 
         {sep}
 
-        {/* Font family */}
         <select
           title="字型"
           className="rounded border border-gray-200 px-1 py-0.5 text-xs"
@@ -163,7 +265,6 @@ export default function RichTextEditor({
           ))}
         </select>
 
-        {/* Font size */}
         <select
           title="字級"
           className="rounded border border-gray-200 px-1 py-0.5 text-xs"
@@ -183,47 +284,40 @@ export default function RichTextEditor({
 
         {sep}
 
-        {/* Text colour */}
-        <label
+        {/* Text colour with presets */}
+        <ColorPicker
           title="文字顏色"
-          className="flex cursor-pointer items-center gap-0.5 rounded px-1 py-0.5 hover:bg-black/10"
-        >
-          <span
-            className="text-xs font-bold"
-            style={{ borderBottom: "2px solid #e11d48" }}
-          >
-            A
-          </span>
-          <input
-            type="color"
-            defaultValue="#e11d48"
-            className="h-4 w-4 cursor-pointer rounded border-0 bg-transparent p-0"
-            onChange={(e) => applyFgColor(e.target.value)}
-          />
-        </label>
+          label={
+            <span
+              className="text-sm font-bold"
+              style={{ borderBottom: "3px solid #dc2626" }}
+            >
+              A
+            </span>
+          }
+          colors={FG_COLORS}
+          defaultCustom="#dc2626"
+          onSelect={applyFgColor}
+        />
 
-        {/* Background colour */}
-        <label
+        {/* Background colour with presets */}
+        <ColorPicker
           title="底色"
-          className="flex cursor-pointer items-center gap-0.5 rounded px-1 py-0.5 hover:bg-black/10"
-        >
-          <span
-            className="rounded px-0.5 text-xs"
-            style={{ background: "#fde68a" }}
-          >
-            底
-          </span>
-          <input
-            type="color"
-            defaultValue="#fde68a"
-            className="h-4 w-4 cursor-pointer rounded border-0 bg-transparent p-0"
-            onChange={(e) => applyBgColor(e.target.value)}
-          />
-        </label>
+          label={
+            <span
+              className="rounded px-0.5 text-xs"
+              style={{ background: "#fef08a" }}
+            >
+              底色
+            </span>
+          }
+          colors={BG_COLORS}
+          defaultCustom="#fef08a"
+          onSelect={applyBgColor}
+        />
 
         {sep}
 
-        {/* Clear formatting */}
         <button
           type="button"
           title="清除格式"
@@ -235,7 +329,7 @@ export default function RichTextEditor({
         </button>
       </div>
 
-      {/* ── Editable area ───────────────────────────────────────────────── */}
+      {/* ── Editable area ────────────────────────────────────────────── */}
       <div
         ref={editorRef}
         contentEditable
