@@ -306,7 +306,7 @@ export default function RichTextEditor({
           label={
             <span
               className="rounded px-0.5 text-xs"
-              style={{ background: "#fef08a" }}
+              style={{ background: "#fef08a", color: "#374151" }}
             >
               底色
             </span>
