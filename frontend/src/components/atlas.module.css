@@ -310,6 +310,16 @@
   width: 100%;
   display: block;
   touch-action: manipulation;
+  /* SVG sits on a parchment canvas in dark mode — reset variables to light-mode
+     values so labels, dots, and meridian colours read correctly on that background */
+  :global(.dark) & {
+    --ink: #2b2620;
+    --ink-soft: #6b5f50;
+    --cinnabar: #b5402e;
+    --jade: #5c7a5c;
+    --bamboo: #c9a876;
+    --line: #d8cbb4;
+  }
 }
 .zoomControls {
   position: absolute;
