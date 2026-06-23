@@ -21,10 +21,10 @@ function expiryStatus(date: string | null): {
   const expiry = new Date(date);
   const days = Math.round((expiry.getTime() - today.getTime()) / 86_400_000);
   if (days < 0)
-    return { label: "Expired", className: "bg-red-100 text-red-700" };
+    return { label: "Expired", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" };
   if (days <= 90)
-    return { label: "Expiring soon", className: "bg-amber-100 text-amber-700" };
-  return { label: "Valid", className: "bg-green-100 text-green-700" };
+    return { label: "Expiring soon", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
+  return { label: "Valid", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" };
 }
 
 export default function Home() {
@@ -131,7 +131,7 @@ export default function Home() {
       />
 
       {error && (
-        <div className="mb-6 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-6 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-950/40 dark:text-red-400">
           {error}
         </div>
       )}

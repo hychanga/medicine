@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tailwind dark-mode: driven by the `dark` class on <html> */
+@variant dark (&:is(.dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,11 +15,17 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* System preference used only as default when no explicit choice is stored */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.dark):not(.light) {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+}
+
+html.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {

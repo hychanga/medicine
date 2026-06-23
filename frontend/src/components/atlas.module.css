@@ -18,6 +18,18 @@
     ),
     radial-gradient(circle at 85% 80%, rgba(92, 122, 92, 0.08) 0%, transparent 45%);
   font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+
+/* ── Dark mode: override CSS custom properties only ─────────────────── */
+:global(.dark) & {
+  --paper: #1a1410;
+  --paper-deep: #241c15;
+  --ink: #f0e6d3;
+  --ink-soft: #a89880;
+  --cinnabar: #d96040;
+  --jade: #6fa06f;
+  --bamboo: #c9a876;
+  --line: #3a2e24;
+}
 }
 
 .header {

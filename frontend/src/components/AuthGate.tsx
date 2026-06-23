@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AuthButton from "./AuthButton";
 import LoginScreen from "./LoginScreen";
+import ThemeToggle from "./ThemeToggle";
 
 // Routes that manage their own auth flow and must render even with no session:
 // the Workspace SSO handoff (/sso) and the single-logout hop (/sso-logout).
@@ -61,6 +62,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         >
           ← 回工作區
         </a>
+        <ThemeToggle />
         <AuthButton />
       </nav>
       {children}

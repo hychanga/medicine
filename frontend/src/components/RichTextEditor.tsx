@@ -74,14 +74,14 @@ function ColorPicker({ label, colors, defaultCustom, onSelect, title }: CPProps)
         title={title}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => setOpen((o) => !o)}
-        className="flex select-none items-center gap-0.5 rounded px-1.5 py-0.5 text-xs hover:bg-black/10"
+        className="flex select-none items-center gap-0.5 rounded px-1.5 py-0.5 text-xs hover:bg-black/10 dark:hover:bg-white/10"
       >
         {label}
         <span className="ml-0.5 text-gray-400">▾</span>
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-lg border bg-white p-2 shadow-xl">
+        <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-lg border bg-white p-2 shadow-xl dark:border-gray-600 dark:bg-gray-800">
           <div className="grid grid-cols-6 gap-1">
             {colors.map((c) => (
               <button
@@ -90,7 +90,7 @@ function ColorPicker({ label, colors, defaultCustom, onSelect, title }: CPProps)
                 title={c === "transparent" ? "無底色" : c}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => { onSelect(c); setOpen(false); }}
-                className="h-5 w-5 rounded border border-gray-200 transition-transform hover:scale-125 hover:border-gray-400"
+                className="h-5 w-5 rounded border border-gray-200 transition-transform hover:scale-125 hover:border-gray-400 dark:border-gray-600"
                 style={
                   c === "transparent"
                     ? {
@@ -102,13 +102,13 @@ function ColorPicker({ label, colors, defaultCustom, onSelect, title }: CPProps)
               />
             ))}
           </div>
-          <div className="mt-2 flex items-center gap-1.5 border-t pt-2">
-            <span className="text-xs text-gray-500">自訂</span>
+          <div className="mt-2 flex items-center gap-1.5 border-t pt-2 dark:border-gray-600">
+            <span className="text-xs text-gray-500 dark:text-gray-400">自訂</span>
             <input
               ref={inputRef}
               type="color"
               defaultValue={defaultCustom}
-              className="h-5 w-5 cursor-pointer rounded border border-gray-200 p-0"
+              className="h-5 w-5 cursor-pointer rounded border border-gray-200 p-0 dark:border-gray-600"
               onChange={(e) => onSelect(e.target.value)}
             />
           </div>
@@ -211,13 +211,13 @@ export default function RichTextEditor({
   }
 
   const btn =
-    "select-none rounded px-2 py-1 text-sm hover:bg-black/10 active:bg-black/20";
-  const sep = <span className="text-gray-300">│</span>;
+    "select-none rounded px-2 py-1 text-sm hover:bg-black/10 active:bg-black/20 dark:hover:bg-white/10 dark:active:bg-white/20";
+  const sep = <span className="text-gray-300 dark:text-gray-600">│</span>;
 
   return (
-    <div className="overflow-hidden rounded border border-gray-300 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-400">
+    <div className="overflow-hidden rounded border border-gray-300 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-400 dark:border-gray-600">
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b bg-gray-50 px-1.5 py-1">
+      <div className="flex flex-wrap items-center gap-0.5 border-b bg-gray-50 px-1.5 py-1 dark:border-gray-700 dark:bg-gray-800">
         <button
           type="button"
           title="粗體 (Ctrl+B)"
@@ -250,7 +250,7 @@ export default function RichTextEditor({
 
         <select
           title="字型"
-          className="rounded border border-gray-200 px-1 py-0.5 text-xs"
+          className="rounded border border-gray-200 px-1 py-0.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
           defaultValue=""
           onMouseDown={(e) => e.preventDefault()}
           onChange={(e) => {
@@ -267,7 +267,7 @@ export default function RichTextEditor({
 
         <select
           title="字級"
-          className="rounded border border-gray-200 px-1 py-0.5 text-xs"
+          className="rounded border border-gray-200 px-1 py-0.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
           defaultValue=""
           onMouseDown={(e) => e.preventDefault()}
           onChange={(e) => {
@@ -348,7 +348,7 @@ export default function RichTextEditor({
           composing.current = false;
           emit();
         }}
-        className="min-h-[130px] p-3 text-sm leading-relaxed outline-none empty:before:text-gray-400 empty:before:content-[attr(data-placeholder)]"
+        className="min-h-[130px] p-3 text-sm leading-relaxed outline-none empty:before:text-gray-400 empty:before:content-[attr(data-placeholder)] dark:bg-gray-900 dark:text-gray-100 dark:empty:before:text-gray-500"
       />
     </div>
   );
