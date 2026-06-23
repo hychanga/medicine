@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import BodyFigure from "./BodyFigure";
 import s from "./atlas.module.css";
+import AcupointChipInput from "./AcupointChipInput";
 import { getNote, saveNote } from "@/lib/notesApi";
 import { getCoordOverrides, saveCoord } from "@/lib/acupointsApi";
 import {
@@ -1036,17 +1037,10 @@ export default function AcupointAtlas() {
 
             {/* Points */}
             <div className={s.modalField}>
-              <label className={s.modalLabel}>建議穴位（逗號分隔，如 LI4,ST36）</label>
-              <input
-                className={s.modalInput}
-                value={symptomForm.points.join(",")}
-                onChange={(e) =>
-                  setSymptomForm((f) => ({
-                    ...f,
-                    points: e.target.value.split(",").map((p) => p.trim()).filter(Boolean),
-                  }))
-                }
-                placeholder="GV20,LI4,ST36"
+              <label className={s.modalLabel}>建議穴位（輸入穴名或代號，按 Enter 新增）</label>
+              <AcupointChipInput
+                value={symptomForm.points}
+                onChange={(pts) => setSymptomForm((f) => ({ ...f, points: pts }))}
               />
             </div>
 
