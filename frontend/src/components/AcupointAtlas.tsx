@@ -13,6 +13,15 @@ import {
   SYMPTOM_GROUPS,
   type Point,
 } from "@/lib/acupoints";
+import {
+  listSymptoms,
+  createSymptom,
+  updateSymptom,
+  deleteSymptom,
+  parseSymptomUrl,
+  type SymptomGroupDto,
+  type Formula,
+} from "@/lib/symptomsApi";
 
 type View = "body" | "symptom";
 type Side = "front" | "back";
@@ -49,6 +58,152 @@ export default function AcupointAtlas() {
   const refDrag = useRef<{ sx: number; sy: number; px: number; py: number } | null>(
     null
   );
+
+  // ---- Symptom groups loaded from API (falls back to hardcoded if fetch fails) ----
+  const [symptoms, setSymptoms] = useState<SymptomGroupDto[]>([]);
+  useEffect(() => {
+    listSymptoms()
+      .then(setSymptoms)
+      .catch(() => {
+        // fall back to built-in data
+        setSymptoms(
+          SYMPTOM_GROUPS.map((g, i) => ({
+            id: i + 1,
+            name: g.name,
+            category: g.category,
+            description: g.description,
+            formulas: g.formulas,
+            points: g.points,
+          }))
+        );
+      });
+  }, []);
+
+  // ---- Admin symptom CRUD ----
+  type SymptomForm = {
+    name: string;
+    category: string;
+    description: string;
+    formulas: Formula[];
+    points: string[];
+    sourceUrl: string;
+  };
+  const emptyForm = (): SymptomForm => ({
+    name: "", category: "", description: "", formulas: [], points: [], sourceUrl: "",
+  });
+
+  const [symptomModal, setSymptomModal] = useState<"create" | "edit" | null>(null);
+  const [editingSymptomId, setEditingSymptomId] = useState<number | null>(null);
+  const [symptomForm, setSymptomForm] = useState<SymptomForm>(emptyForm());
+  const [symptomSaving, setSymptomSaving] = useState(false);
+  const [symptomError, setSymptomError] = useState("");
+  const [parseUrl, setParseUrl] = useState("");
+  const [parsing, setParsing] = useState(false);
+
+  function openCreateSymptom() {
+    setSymptomForm(emptyForm());
+    setParseUrl("");
+    setSymptomError("");
+    setEditingSymptomId(null);
+    setSymptomModal("create");
+  }
+
+  function openEditSymptom(sg: SymptomGroupDto) {
+    setSymptomForm({
+      name: sg.name,
+      category: sg.category,
+      description: sg.description,
+      formulas: sg.formulas.map((f) => ({ ...f })),
+      points: [...sg.points],
+      sourceUrl: sg.sourceUrl ?? "",
+    });
+    setParseUrl(sg.sourceUrl ?? "");
+    setSymptomError("");
+    setEditingSymptomId(sg.id);
+    setSymptomModal("edit");
+  }
+
+  async function handleParseUrl() {
+    if (!parseUrl.trim()) return;
+    setParsing(true);
+    setSymptomError("");
+    try {
+      const data = await parseSymptomUrl(parseUrl.trim());
+      setSymptomForm((f) => ({
+        ...f,
+        name: data.name ?? f.name,
+        category: data.category ?? f.category,
+        description: data.description ?? f.description,
+        formulas: data.formulas?.length ? data.formulas : f.formulas,
+        points: data.points?.length ? data.points : f.points,
+        sourceUrl: parseUrl.trim(),
+      }));
+    } catch (e) {
+      setSymptomError(e instanceof Error ? e.message : "AI 解析失敗");
+    } finally {
+      setParsing(false);
+    }
+  }
+
+  async function handleSaveSymptom() {
+    if (!symptomForm.name.trim()) { setSymptomError("名稱不可空白"); return; }
+    setSymptomSaving(true);
+    setSymptomError("");
+    try {
+      const input = {
+        name: symptomForm.name.trim(),
+        category: symptomForm.category,
+        description: symptomForm.description,
+        formulas: symptomForm.formulas,
+        points: symptomForm.points,
+        sourceUrl: symptomForm.sourceUrl || undefined,
+      };
+      if (symptomModal === "create") {
+        const created = await createSymptom(input);
+        setSymptoms((prev) => [...prev, created]);
+      } else if (symptomModal === "edit" && editingSymptomId != null) {
+        const updated = await updateSymptom(editingSymptomId, input);
+        setSymptoms((prev) => prev.map((x) => x.id === editingSymptomId ? updated : x));
+        if (selectedSymptomId === String(editingSymptomId)) {
+          // keep selection pointing at updated record
+        }
+      }
+      setSymptomModal(null);
+    } catch (e) {
+      setSymptomError(e instanceof Error ? e.message : "儲存失敗");
+    } finally {
+      setSymptomSaving(false);
+    }
+  }
+
+  async function handleDeleteSymptom(id: number, name: string) {
+    if (!confirm(`確定要刪除「${name}」嗎？`)) return;
+    try {
+      await deleteSymptom(id);
+      setSymptoms((prev) => prev.filter((x) => x.id !== id));
+      if (selectedSymptomId === String(id)) setSelectedSymptomId(null);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "刪除失敗");
+    }
+  }
+
+  function addFormula() {
+    setSymptomForm((f) => ({
+      ...f,
+      formulas: [...f.formulas, { name: "", pattern: "", composition: "", usage: "", notes: "" }],
+    }));
+  }
+
+  function updateFormula(i: number, field: keyof Formula, value: string) {
+    setSymptomForm((f) => {
+      const formulas = f.formulas.map((x, j) => j === i ? { ...x, [field]: value } : x);
+      return { ...f, formulas };
+    });
+  }
+
+  function removeFormula(i: number) {
+    setSymptomForm((f) => ({ ...f, formulas: f.formulas.filter((_, j) => j !== i) }));
+  }
 
   function zoomRef(delta: number) {
     // Zoom keeps the image centred (pan resets); drag to move afterwards.
@@ -677,20 +832,24 @@ export default function AcupointAtlas() {
             </>
           ) : (
             <div className={s.symptomGrid}>
+              {isAdmin && (
+                <button
+                  className={s.symptomAddBtn}
+                  onClick={openCreateSymptom}
+                >
+                  ＋ 新增病徵
+                </button>
+              )}
               {(() => {
-                const list = SYMPTOM_GROUPS.filter((s2) => {
-                  const catOk = category === "ALL" || s2.category === category;
+                const list = symptoms.filter((sg) => {
+                  const catOk = category === "ALL" || sg.category === category;
                   const searchOk =
                     !term ||
                     [
-                      s2.name,
-                      s2.description,
-                      s2.category,
-                      ...s2.formulas.flatMap((f) => [
-                        f.name,
-                        f.composition,
-                        f.pattern,
-                      ]),
+                      sg.name,
+                      sg.description,
+                      sg.category,
+                      ...sg.formulas.flatMap((f) => [f.name, f.composition, f.pattern]),
                     ].some((f) => f.toLowerCase().includes(term));
                   return catOk && searchOk;
                 });
@@ -698,32 +857,33 @@ export default function AcupointAtlas() {
                   return (
                     <p className={s.favEmpty}>沒有符合的病徵，請調整搜尋或分類。</p>
                   );
-                return list.map((g) => (
-                  <button
-                    key={g.id}
-                    className={`${s.symptomCard} ${
-                      g.id === selectedSymptomId ? s.selected : ""
-                    }`}
-                    onClick={() => setSelectedSymptomId(g.id)}
-                  >
-                    <span
-                      className={s.catTag}
-                      style={{ background: SYMPTOM_CATEGORIES[g.category] }}
+                return list.map((sg) => (
+                  <div key={sg.id} className={s.symptomCardWrap}>
+                    <button
+                      className={`${s.symptomCard} ${
+                        String(sg.id) === selectedSymptomId ? s.selected : ""
+                      }`}
+                      onClick={() => setSelectedSymptomId(String(sg.id))}
                     >
-                      {g.category}
-                    </span>
-                    <h4>{g.name}</h4>
-                    <p>{g.description}</p>
-                    <p
-                      style={{
-                        marginTop: 6,
-                        color: "var(--cinnabar)",
-                        fontSize: "11.5px",
-                      }}
-                    >
-                      {g.formulas.map((f) => f.name).join(" ／ ")}
-                    </p>
-                  </button>
+                      <span
+                        className={s.catTag}
+                        style={{ background: SYMPTOM_CATEGORIES[sg.category] }}
+                      >
+                        {sg.category}
+                      </span>
+                      <h4>{sg.name}</h4>
+                      <p>{sg.description}</p>
+                      <p style={{ marginTop: 6, color: "var(--cinnabar)", fontSize: "11.5px" }}>
+                        {sg.formulas.map((f) => f.name).join(" ／ ")}
+                      </p>
+                    </button>
+                    {isAdmin && (
+                      <div className={s.symptomAdminRow}>
+                        <button type="button" className={s.symptomEditBtn} onClick={() => openEditSymptom(sg)}>編輯</button>
+                        <button type="button" className={s.symptomDelBtn} onClick={() => handleDeleteSymptom(sg.id, sg.name)}>刪除</button>
+                      </div>
+                    )}
+                  </div>
                 ));
               })()}
             </div>
@@ -735,6 +895,7 @@ export default function AcupointAtlas() {
           {view === "symptom" ? (
             <SymptomDetail
               selectedSymptomId={selectedSymptomId}
+              symptoms={symptoms}
               onJump={jumpToPoint}
             />
           ) : !selectedId && meridian !== "ALL" ? (
@@ -777,6 +938,129 @@ export default function AcupointAtlas() {
           </nav>
         );
       })()}
+      {/* ── Symptom CRUD modal (admin only) ── */}
+      {symptomModal && (
+        <div
+          className={s.modalOverlay}
+          onClick={() => setSymptomModal(null)}
+        >
+          <div className={s.modalBox} onClick={(e) => e.stopPropagation()}>
+            <div className={s.modalHeader}>
+              <h3>{symptomModal === "create" ? "新增病徵" : "編輯病徵"}</h3>
+              <button type="button" className={s.modalClose} onClick={() => setSymptomModal(null)}>✕</button>
+            </div>
+
+            {/* URL parse */}
+            <div className={s.modalField}>
+              <label className={s.modalLabel}>來源網址（可貼入 URL 讓 AI 自動解析）</label>
+              <div className={s.modalParseRow}>
+                <input
+                  className={s.modalInput}
+                  value={parseUrl}
+                  onChange={(e) => setParseUrl(e.target.value)}
+                  placeholder="https://..."
+                />
+                <button
+                  type="button"
+                  className={s.parseBtn}
+                  onClick={handleParseUrl}
+                  disabled={parsing || !parseUrl.trim()}
+                >
+                  {parsing ? "解析中…" : "AI 解析"}
+                </button>
+              </div>
+            </div>
+
+            <div className={s.modalField}>
+              <label className={s.modalLabel}>名稱 *</label>
+              <input
+                className={s.modalInput}
+                value={symptomForm.name}
+                onChange={(e) => setSymptomForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="例：失眠"
+              />
+            </div>
+
+            <div className={s.modalField}>
+              <label className={s.modalLabel}>分類</label>
+              <select
+                className={s.modalSelect}
+                value={symptomForm.category}
+                onChange={(e) => setSymptomForm((f) => ({ ...f, category: e.target.value }))}
+              >
+                <option value="">請選擇…</option>
+                {Object.keys(SYMPTOM_CATEGORIES).map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className={s.modalField}>
+              <label className={s.modalLabel}>概述</label>
+              <textarea
+                className={s.modalTextarea}
+                value={symptomForm.description}
+                onChange={(e) => setSymptomForm((f) => ({ ...f, description: e.target.value }))}
+                rows={2}
+                placeholder="對此症狀的簡短說明…"
+              />
+            </div>
+
+            {/* Formulas */}
+            <div className={s.modalField}>
+              <div className={s.modalLabelRow}>
+                <label className={s.modalLabel}>方劑</label>
+                <button type="button" className={s.addFormulaBtn} onClick={addFormula}>＋ 新增方劑</button>
+              </div>
+              {symptomForm.formulas.map((f, i) => (
+                <div key={i} className={s.formulaBlock}>
+                  <div className={s.formulaBlockHeader}>
+                    <span>方劑 {i + 1}</span>
+                    <button type="button" className={s.removeFormulaBtn} onClick={() => removeFormula(i)}>✕</button>
+                  </div>
+                  {(["name", "pattern", "composition", "usage", "notes"] as const).map((field) => (
+                    <div key={field} className={s.formulaRow}>
+                      <label className={s.formulaLabel}>
+                        {{ name: "方劑名", pattern: "辨證", composition: "組成", usage: "用法", notes: "注意" }[field]}
+                      </label>
+                      <input
+                        className={s.modalInput}
+                        value={f[field]}
+                        onChange={(e) => updateFormula(i, field, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Points */}
+            <div className={s.modalField}>
+              <label className={s.modalLabel}>建議穴位（逗號分隔，如 LI4,ST36）</label>
+              <input
+                className={s.modalInput}
+                value={symptomForm.points.join(",")}
+                onChange={(e) =>
+                  setSymptomForm((f) => ({
+                    ...f,
+                    points: e.target.value.split(",").map((p) => p.trim()).filter(Boolean),
+                  }))
+                }
+                placeholder="GV20,LI4,ST36"
+              />
+            </div>
+
+            {symptomError && <p className={s.modalError}>{symptomError}</p>}
+
+            <div className={s.modalActions}>
+              <button type="button" className={s.modalCancel} onClick={() => setSymptomModal(null)}>取消</button>
+              <button type="button" className={s.modalSave} onClick={handleSaveSymptom} disabled={symptomSaving}>
+                {symptomSaving ? "儲存中…" : "儲存"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -954,12 +1238,14 @@ function PointDetail({ selectedId }: { selectedId: string | null }) {
 
 function SymptomDetail({
   selectedSymptomId,
+  symptoms,
   onJump,
 }: {
   selectedSymptomId: string | null;
+  symptoms: SymptomGroupDto[];
   onJump: (pointId: string) => void;
 }) {
-  const g = SYMPTOM_GROUPS.find((x) => x.id === selectedSymptomId) ?? null;
+  const g = symptoms.find((x) => String(x.id) === selectedSymptomId) ?? null;
 
   if (!g) {
     return (

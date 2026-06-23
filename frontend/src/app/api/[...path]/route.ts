@@ -9,6 +9,9 @@ const sharedSecret = new TextEncoder().encode(
     "dev-local-shared-secret-please-change-0123456789"
 );
 
+// Paths that are readable without authentication (backed by a public backend endpoint).
+const PUBLIC_GET_PREFIXES = ["symptoms"];
+
 // Backend-for-frontend proxy: authenticate the session, mint a short-lived
 // HS256 JWT for the logged-in user, and forward the request to the Spring Boot
 // API. The browser never sees the backend token.
@@ -16,29 +19,36 @@ async function proxy(
   req: Request,
   ctx: { params: Promise<{ path: string[] }> }
 ) {
+  const { path } = await ctx.params;
+  const isPublicGet =
+    req.method === "GET" && PUBLIC_GET_PREFIXES.some((p) => path[0] === p);
+
   const session = await auth();
   const userId = session?.user?.id;
-  if (!userId) {
+
+  if (!isPublicGet && !userId) {
     return Response.json({ message: "未登入，請先以 Google 登入" }, { status: 401 });
   }
 
-  const { path } = await ctx.params;
   const search = new URL(req.url).search;
   const target = `${API_BASE_URL}/api/${path.join("/")}${search}`;
 
-  const token = await new SignJWT({
-    email: session.user?.email ?? undefined,
-    name: session.user?.name ?? undefined,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject(userId)
-    .setIssuedAt()
-    .setExpirationTime("2m")
-    .sign(sharedSecret);
-
-  const headers: Record<string, string> = { authorization: `Bearer ${token}` };
+  const headers: Record<string, string> = {};
   const contentType = req.headers.get("content-type");
   if (contentType) headers["content-type"] = contentType;
+
+  if (userId) {
+    const token = await new SignJWT({
+      email: session!.user?.email ?? undefined,
+      name: session!.user?.name ?? undefined,
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setSubject(userId)
+      .setIssuedAt()
+      .setExpirationTime("2m")
+      .sign(sharedSecret);
+    headers["authorization"] = `Bearer ${token}`;
+  }
 
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
   const upstream = await fetch(target, {
