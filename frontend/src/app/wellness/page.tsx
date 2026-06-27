@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import RichTextEditor from "@/components/RichTextEditor";
+import SafeHtml from "@/components/SafeHtml";
 import {
   createWellness,
   deleteWellness,
@@ -419,9 +420,9 @@ export default function WellnessPage() {
                 <div className="mt-3 grid gap-4 md:grid-cols-[1fr_auto]">
                   <div>
                     {w.summary && (
-                      <div
+                      <SafeHtml
+                        html={w.summary}
                         className="prose prose-sm max-w-none text-sm leading-relaxed text-black/80 dark:text-gray-200"
-                        dangerouslySetInnerHTML={{ __html: w.summary }}
                       />
                     )}
                     <div className="mt-3 flex flex-wrap gap-1.5">
