@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "./ThemeProvider";
+import { adjustHtmlColors } from "@/lib/htmlColors";
 
 const FONTS = [
   { label: "預設字型", value: "" },
@@ -141,13 +143,24 @@ export default function RichTextEditor({
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRange = useRef<Range | null>(null);
   const composing = useRef(false);
+  const { dark } = useTheme();
+  // Tracks the last-emitted HTML so theme changes can re-render with adjusted colors.
+  const canonicalRef = useRef(value);
 
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.innerHTML = value;
+      canonicalRef.current = value;
+      editorRef.current.innerHTML = adjustHtmlColors(value, dark);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-render with adjusted colors whenever the theme toggles.
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.innerHTML = adjustHtmlColors(canonicalRef.current, dark);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dark]);
 
   function saveSelection() {
     const sel = window.getSelection();
@@ -166,7 +179,9 @@ export default function RichTextEditor({
   }
 
   function emit() {
-    onChange(editorRef.current?.innerHTML ?? "");
+    const html = editorRef.current?.innerHTML ?? "";
+    canonicalRef.current = html;
+    onChange(html);
   }
 
   function exec(cmd: string, val?: string) {
