@@ -45,7 +45,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"銀翹散","pattern":"發熱重、咽喉腫痛、口乾、舌紅 — 風熱表證","composition":"金銀花、連翹、薄荷、牛蒡子、桔梗、淡竹葉、荊芥、甘草","usage":"水煎或沖泡代茶飲，每日一至二劑。","notes":"風寒無汗惡寒者不宜，脾胃虛寒慎用。"}
                 ]
                 """,
-                """["GV14","LI4","GV20"]"""),
+                """
+                ["GV14","LI4","GV20"]
+                """),
 
             make(2, "咳嗽", "肺系類",
                 "依痰之寒熱與多寡區分證型，咳嗽久暫、痰色痰量是辨證關鍵。",
@@ -56,7 +58,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"二陳湯","pattern":"咳嗽痰多色白、胸悶、喉中痰鳴 — 痰濕咳嗽","composition":"半夏、陳皮、茯苓、炙甘草、生薑","usage":"水煎溫服，每日一劑，分二次飯後服。","notes":"燥咳、陰虛火旺者不宜。"}
                 ]
                 """,
-                """["CV17","LU1","LU7"]"""),
+                """
+                ["CV17","LU1","LU7"]
+                """),
 
             make(3, "失眠", "神志類",
                 "失眠常與心、肝、脾相關，依伴隨症狀（陰虛火旺、肝血不足、心脾兩虛）選方。",
@@ -67,7 +71,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"歸脾湯","pattern":"失眠多夢、健忘、食慾不振、倦怠乏力 — 心脾兩虛","composition":"白朮、茯苓、黃耆、龍眼肉、酸棗仁、人參、木香、當歸、遠志、炙甘草、生薑、大棗","usage":"水煎溫服，每日一劑，分二次服。","notes":"實熱證、舌苔黃厚者不宜。"}
                 ]
                 """,
-                """["HT7","PC6","GV20","SP6"]"""),
+                """
+                ["HT7","PC6","GV20","SP6"]
+                """),
 
             make(4, "情緒煩躁／焦慮", "神志類",
                 "情緒鬱結與肝氣不暢相關，輕者藥性平和方劑即可，較重者須疏肝理氣。",
@@ -77,7 +83,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"逍遙散","pattern":"胸脅脹悶、易怒、經前症狀加重、嘆氣 — 肝鬱證","composition":"柴胡、白芍、當歸、白朮、茯苓、炙甘草、生薑、薄荷","usage":"水煎溫服或科學中藥沖服，每日一至二次。","notes":"陰虛血燥、潮熱明顯者慎用。"}
                 ]
                 """,
-                """["LR3","PC6","GV20"]"""),
+                """
+                ["LR3","PC6","GV20"]
+                """),
 
             make(5, "胃脹消化不良", "脾胃類",
                 "依虛實區分：脾胃氣虛者宜補益，食積氣滯者宜消導。",
@@ -87,7 +95,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"保和丸","pattern":"噯腐吞酸、腹脹拒按、大便臭穢 — 食積證","composition":"山楂、神麴、半夏、茯苓、陳皮、連翹、萊菔子","usage":"成藥每次一份，每日二至三次，飯後服用。","notes":"脾胃虛弱無食積者不宜長期服用。"}
                 ]
                 """,
-                """["ST36","CV12"]"""),
+                """
+                ["ST36","CV12"]
+                """),
 
             make(6, "便秘", "脾胃類",
                 "腸燥便秘多見口乾、便硬；氣虛便秘多見年長體弱、便質不硬但排出無力。",
@@ -97,7 +107,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"補中益氣湯","pattern":"排便無力、便質不硬但難排出、神疲乏力 — 氣虛便秘","composition":"黃耆、人參、白朮、當歸、陳皮、升麻、柴胡、炙甘草、生薑、大棗","usage":"水煎溫服，每日一劑。","notes":"實熱便秘、舌紅苔黃者不宜。"}
                 ]
                 """,
-                """["ST36","CV12"]"""),
+                """
+                ["ST36","CV12"]
+                """),
 
             make(7, "月經不調／痛經", "婦科類",
                 "依經色、經量與腹痛性質區分寒凝、血虛、血瘀等證型。",
@@ -108,7 +120,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"桃紅四物湯","pattern":"經色暗紫有血塊、小腹刺痛、舌暗 — 血瘀證","composition":"桃仁、紅花、當歸、川芎、芍藥、熟地黃","usage":"水煎溫服，經前數日開始服用。","notes":"經量過多、孕婦禁用。"}
                 ]
                 """,
-                """["SP6","CV4","SP10"]"""),
+                """
+                ["SP6","CV4","SP10"]
+                """),
 
             make(8, "頭痛", "肝腎類",
                 "外感誘發的頭痛與肝陽上亢型頭痛在誘因與伴隨症狀上不同，選方亦異。",
@@ -118,7 +132,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"天麻鉤藤飲","pattern":"頭痛眩暈、急躁易怒、失眠、面紅 — 肝陽上亢","composition":"天麻、鉤藤、石決明、黃芩、山梔子、牛膝、杜仲、益母草、桑寄生、夜交藤、茯神","usage":"水煎溫服，每日一劑。","notes":"氣血兩虛、面色蒼白者不宜單用。"}
                 ]
                 """,
-                """["GV20","LI4","LR3"]"""),
+                """
+                ["GV20","LI4","LR3"]
+                """),
 
             make(9, "腰膝痠軟／疲勞", "肝腎類",
                 "腎陰虛多兼潮熱口乾；腎陽虛多兼畏寒夜尿，兩者用方寒熱迥異。",
@@ -128,7 +144,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"金匱腎氣丸","pattern":"腰膝冷痛、畏寒、夜尿頻多、四肢不溫 — 腎陽虛","composition":"熟地黃、山藥、山茱萸、澤瀉、茯苓、牡丹皮、桂枝、附子","usage":"成藥每次一份，每日二至三次，溫水送服。","notes":"含附子，陰虛火旺、孕婦不宜，須遵醫囑。"}
                 ]
                 """,
-                """["KI3","ST36","CV4","GV4"]"""),
+                """
+                ["KI3","ST36","CV4","GV4"]
+                """),
 
             make(10, "水腫", "脾胃類",
                 "水濕內停與氣虛水腫的差別在於是否伴隨自汗、怕風與身體沉重感。",
@@ -138,7 +156,9 @@ public class SymptomGroupSeeder implements CommandLineRunner {
                   {"name":"防己黃耆湯","pattern":"下肢浮腫、汗出怕風、身體沉重 — 氣虛水腫","composition":"防己、黃耆、白朮、甘草、生薑、大棗","usage":"水煎溫服，每日一劑。","notes":"表實無汗、高血壓控制不佳者慎用。"}
                 ]
                 """,
-                """["SP6","SP9","ST36"]""")
+                """
+                ["SP6","SP9","ST36"]
+                """)
         );
     }
 
