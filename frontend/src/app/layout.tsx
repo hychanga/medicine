@@ -28,6 +28,8 @@ export default function RootLayout({
     <html
       lang="zh-Hant"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // 下方的 anti-FOUC 腳本會在 React 接手前加上 "dark" class，屬於預期內的差異
+      suppressHydrationWarning
     >
       <head>
         {/* Anti-FOUC: apply dark class before first paint */}

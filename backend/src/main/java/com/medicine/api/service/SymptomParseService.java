@@ -38,7 +38,7 @@ public class SymptomParseService {
             .build();
 
     public SymptomParseService(@Value("${app.gemini.api-key:}") String apiKey,
-                               @Value("${app.gemini.model:gemini-2.5-flash}") String model) {
+                               @Value("${app.gemini.model:gemini-3.5-flash}") String model) {
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.model = model;
     }
@@ -94,7 +94,7 @@ public class SymptomParseService {
 
     private JsonNode callGemini(String pageText, String sourceUrl) {
         try {
-            String categories = "外感類、肺系類、脾胃類、婦科類、神志類、肝腎類";
+            String categories = "外感類、肺系類、脾胃類、婦科類、神志類、肝腎類、五官類";
             String prompt = "你是一位中醫藥知識整理助手。請從以下網頁內容中，提取一組症狀與方劑資料，以繁體中文整理後，"
                     + "回傳嚴格符合以下 JSON 格式的物件（僅輸出 JSON，不加說明或 Markdown 程式碼圍欄）：\n\n"
                     + "{\n"
@@ -115,43 +115,54 @@ public class SymptomParseService {
                     + "若找不到方劑，formulas 回傳空陣列；若找不到穴位，points 回傳空陣列。\n"
                     + "來源網址：" + sourceUrl + "\n\n"
                     + "---網頁內容---\n" + pageText;
-
-            ObjectNode root = mapper.createObjectNode();
-            ArrayNode contents = root.putArray("contents");
-            contents.addObject().putArray("parts").addObject().put("text", prompt);
-
-            String geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + model + ":generateContent?key=" + apiKey;
-
-            HttpRequest req = HttpRequest.newBuilder(URI.create(geminiUrl))
-                    .timeout(Duration.ofSeconds(60))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(root)))
-                    .build();
-
-            HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
-            if (resp.statusCode() / 100 != 2) {
-                log.warn("Gemini parse request failed ({}): {}", resp.statusCode(), resp.body());
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gemini API 呼叫失敗");
-            }
-
-            JsonNode body = mapper.readTree(resp.body());
-            JsonNode textNode = body.path("candidates").path(0)
-                    .path("content").path("parts").path(0).path("text");
-            if (textNode.isMissingNode()) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gemini 未返回有效回應");
-            }
-            String raw = textNode.asText().trim();
-            // Strip markdown fences if present
-            if (raw.startsWith("```")) {
-                raw = raw.replaceAll("^```[a-z]*\\n?", "").replaceAll("\\n?```$", "").trim();
-            }
-            return mapper.readTree(raw);
+            return generateJson(prompt);
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
             log.warn("Gemini symptom parse error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI 解析失敗：" + e.getMessage());
         }
+    }
+
+    private JsonNode generateJson(String prompt) throws Exception {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode contents = root.putArray("contents");
+        contents.addObject().putArray("parts").addObject().put("text", prompt);
+        root.putObject("generationConfig").put("responseMimeType", "application/json");
+
+        String geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/"
+                + model + ":generateContent?key=" + apiKey;
+
+        HttpRequest req = HttpRequest.newBuilder(URI.create(geminiUrl))
+                .timeout(Duration.ofSeconds(60))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(root)))
+                .build();
+
+        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+        if (resp.statusCode() / 100 != 2) {
+            log.warn("Gemini parse request failed ({}): {}", resp.statusCode(), resp.body());
+            String detail;
+            try {
+                detail = mapper.readTree(resp.body()).path("error").path("message").asText("");
+            } catch (Exception ignored) {
+                detail = "";
+            }
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gemini API 呼叫失敗（HTTP "
+                    + resp.statusCode() + (detail.isBlank() ? "" : "：" + detail) + "，模型 " + model + "）");
+        }
+
+        JsonNode body = mapper.readTree(resp.body());
+        JsonNode textNode = body.path("candidates").path(0)
+                .path("content").path("parts").path(0).path("text");
+        if (textNode.isMissingNode()) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gemini 未返回有效回應");
+        }
+        String raw = textNode.asText().trim();
+        // Strip markdown fences if present
+        if (raw.startsWith("```")) {
+            raw = raw.replaceAll("^```[a-z]*\\n?", "").replaceAll("\\n?```$", "").trim();
+        }
+        return mapper.readTree(raw);
     }
 }

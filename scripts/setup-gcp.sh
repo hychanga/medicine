@@ -30,7 +30,8 @@ gcloud services enable \
   run.googleapis.com \
   cloudbuild.googleapis.com \
   artifactregistry.googleapis.com \
-  secretmanager.googleapis.com
+  secretmanager.googleapis.com \
+  vision.googleapis.com
 
 echo "▶ Artifact Registry repo (idempotent)…"
 gcloud artifacts repositories describe "$REPO" --location="$REGION" >/dev/null 2>&1 || \

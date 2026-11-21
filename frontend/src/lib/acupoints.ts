@@ -60,7 +60,19 @@ export const SYMPTOM_CATEGORIES: Record<string, string> = {
   婦科類: "#A85C7A",
   神志類: "#7A5CA8",
   肝腎類: "#5C7AA8",
+  五官類: "#4F8FA0",
 };
+
+// 自訂分類（不在上表中）依名稱固定配一個顏色
+const EXTRA_CATEGORY_COLORS = ["#8A7A3C", "#6B8F4E", "#9C5C3C", "#5C6FA8", "#8A5C8F", "#3C8A7A", "#A86B5C"];
+
+export function categoryColor(category: string): string {
+  if (SYMPTOM_CATEGORIES[category]) return SYMPTOM_CATEGORIES[category];
+  if (!category) return "#8A8273";
+  let h = 0;
+  for (const ch of category) h = (h * 31 + ch.codePointAt(0)!) >>> 0;
+  return EXTRA_CATEGORY_COLORS[h % EXTRA_CATEGORY_COLORS.length];
+}
 
 export const POINTS: Point[] = [
   // ---- FRONT VIEW ----

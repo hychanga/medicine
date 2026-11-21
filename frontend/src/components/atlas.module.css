@@ -1115,3 +1115,125 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* ── 看診方劑掃描 ─────────────────────────────────────────────────── */
+.symptomAddRow {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+}
+.symptomAddRow .symptomAddBtn {
+  flex: 1;
+}
+.symptomScanBtn {
+  border-color: var(--cinnabar);
+  color: var(--cinnabar);
+}
+.symptomScanBtn:hover {
+  background: rgba(181, 64, 46, 0.08);
+}
+.scanTag {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--cinnabar);
+  border: 1px solid var(--cinnabar);
+  border-radius: 3px;
+  padding: 0 5px;
+  margin: 0 0 6px 6px;
+}
+.scanThumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.scanThumb {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--paper-deep);
+  display: block;
+}
+.scanThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.scanPending {
+  border-style: dashed;
+  border-color: var(--bamboo);
+}
+.scanRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 11px;
+  line-height: 20px;
+  padding: 0;
+  cursor: pointer;
+}
+.scanPick {
+  width: 84px;
+  height: 84px;
+  border: 1.5px dashed var(--bamboo);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 12px;
+  color: var(--jade);
+  cursor: pointer;
+  padding: 4px;
+}
+.scanPick:hover {
+  background: rgba(92, 122, 92, 0.08);
+}
+.scanHint {
+  flex: 1;
+  font-size: 12px;
+  color: var(--ink-soft);
+  align-self: center;
+}
+.scanNotice {
+  font-size: 12px;
+  color: var(--jade);
+  margin: 6px 0 0;
+}
+.scanMetaRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+}
+.scanMetaRow > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ocrDetails summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+.ocrDetails pre {
+  white-space: pre-wrap;
+  font-size: 12px;
+  line-height: 1.6;
+  background: var(--paper-deep);
+  border-radius: 6px;
+  padding: 8px 10px;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+}

@@ -45,6 +45,16 @@ public class GcsStorageService {
         return s;
     }
 
+    /** Uploads bytes server-side and returns the object's public URL. */
+    public String upload(String objectName, String contentType, byte[] data) {
+        BlobInfo info = BlobInfo.newBuilder(BlobId.of(bucket, objectName))
+                .setContentType(contentType)
+                .setCacheControl("public, max-age=31536000, immutable")
+                .build();
+        storage().create(info, data);
+        return "https://storage.googleapis.com/" + bucket + "/" + objectName;
+    }
+
     /** Returns {"uploadUrl": signed PUT url, "publicUrl": eventual public url}. */
     public Map<String, String> signedUpload(String objectName, String contentType) {
         BlobInfo info = BlobInfo.newBuilder(BlobId.of(bucket, objectName))
