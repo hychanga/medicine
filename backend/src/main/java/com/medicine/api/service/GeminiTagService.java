@@ -38,7 +38,7 @@ public class GeminiTagService {
             .build();
 
     public GeminiTagService(@Value("${app.gemini.api-key:}") String apiKey,
-                            @Value("${app.gemini.model:gemini-2.5-flash}") String model) {
+                            @Value("${app.gemini.model:gemini-3.5-flash}") String model) {
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.model = model;
     }

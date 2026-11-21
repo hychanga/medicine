@@ -10,6 +10,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "symptom_groups")
@@ -38,6 +39,25 @@ public class SymptomGroupEntity {
 
     @Column(name = "source_url", length = 512)
     private String sourceUrl;
+
+    /** 資料來源："web"（網路整理，預設）或 "scan"（看診方劑掃描）。 */
+    @Column(name = "source_type", length = 16)
+    private String sourceType;
+
+    /** 掃描圖片的公開 GCS 網址，JSON 字串陣列。 */
+    @Column(name = "image_urls", columnDefinition = "TEXT")
+    private String imageUrls;
+
+    @Column(name = "visit_date")
+    private LocalDate visitDate;
+
+    /** 診所 / 醫師。 */
+    @Column(length = 128)
+    private String clinic;
+
+    /** 掃描圖片的 OCR 原文（供核對）。 */
+    @Column(name = "ocr_text", columnDefinition = "TEXT")
+    private String ocrText;
 
     @Column(name = "created_by", length = 128)
     private String createdBy;
@@ -82,6 +102,21 @@ public class SymptomGroupEntity {
 
     public String getSourceUrl() { return sourceUrl; }
     public void setSourceUrl(String sourceUrl) { this.sourceUrl = sourceUrl; }
+
+    public String getSourceType() { return sourceType; }
+    public void setSourceType(String sourceType) { this.sourceType = sourceType; }
+
+    public String getImageUrls() { return imageUrls; }
+    public void setImageUrls(String imageUrls) { this.imageUrls = imageUrls; }
+
+    public LocalDate getVisitDate() { return visitDate; }
+    public void setVisitDate(LocalDate visitDate) { this.visitDate = visitDate; }
+
+    public String getClinic() { return clinic; }
+    public void setClinic(String clinic) { this.clinic = clinic; }
+
+    public String getOcrText() { return ocrText; }
+    public void setOcrText(String ocrText) { this.ocrText = ocrText; }
 
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }

@@ -12,6 +12,7 @@ import {
   POINTS,
   SYMPTOM_CATEGORIES,
   SYMPTOM_GROUPS,
+  categoryColor,
   type Point,
 } from "@/lib/acupoints";
 import {
@@ -20,7 +21,10 @@ import {
   updateSymptom,
   deleteSymptom,
   parseSymptomUrl,
+  parseScan,
+  MAX_SCAN_FILES,
   type SymptomGroupDto,
+  type SymptomSourceType,
   type Formula,
 } from "@/lib/symptomsApi";
 
@@ -49,6 +53,7 @@ export default function AcupointAtlas() {
   const [side, setSide] = useState<Side>("front");
   const [meridian, setMeridian] = useState("ALL");
   const [category, setCategory] = useState("ALL");
+  const [sourceFilter, setSourceFilter] = useState<"ALL" | SymptomSourceType>("ALL");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedSymptomId, setSelectedSymptomId] = useState<string | null>(null);
@@ -80,6 +85,17 @@ export default function AcupointAtlas() {
       });
   }, []);
 
+  // 分類 = 內建分類 + 資料中出現過的自訂分類
+  const categories = useMemo(() => {
+    const list = Object.keys(SYMPTOM_CATEGORIES);
+    for (const sg of symptoms) {
+      const c = sg.category?.trim();
+      if (c && !list.includes(c)) list.push(c);
+    }
+    return list;
+  }, [symptoms]);
+  const [customCategory, setCustomCategory] = useState(false);
+
   // ---- Admin symptom CRUD ----
   type SymptomForm = {
     name: string;
@@ -88,9 +104,15 @@ export default function AcupointAtlas() {
     formulas: Formula[];
     points: string[];
     sourceUrl: string;
+    sourceType: SymptomSourceType;
+    visitDate: string;
+    clinic: string;
+    ocrText: string;
+    imageUrls: string[];
   };
-  const emptyForm = (): SymptomForm => ({
+  const emptyForm = (sourceType: SymptomSourceType = "web"): SymptomForm => ({
     name: "", category: "", description: "", formulas: [], points: [], sourceUrl: "",
+    sourceType, visitDate: "", clinic: "", ocrText: "", imageUrls: [],
   });
 
   const [symptomModal, setSymptomModal] = useState<"create" | "edit" | null>(null);
@@ -100,8 +122,96 @@ export default function AcupointAtlas() {
   const [symptomError, setSymptomError] = useState("");
   const [parseUrl, setParseUrl] = useState("");
   const [parsing, setParsing] = useState(false);
+  // 看診方劑掃描：待辨識的圖片（含預覽）
+  const [scanFiles, setScanFiles] = useState<{ file: File; url: string }[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [scanNotice, setScanNotice] = useState("");
+
+  function clearScanFiles() {
+    setScanFiles((prev) => {
+      prev.forEach((x) => URL.revokeObjectURL(x.url));
+      return [];
+    });
+  }
+
+  function closeSymptomModal() {
+    clearScanFiles();
+    setSymptomModal(null);
+  }
+
+  function resetModalState() {
+    setCustomCategory(false);
+    clearScanFiles();
+    setScanNotice("");
+    setSymptomError("");
+  }
+
+  function openCreateScan() {
+    resetModalState();
+    setSymptomForm(emptyForm("scan"));
+    setParseUrl("");
+    setEditingSymptomId(null);
+    setSymptomModal("create");
+  }
+
+  function addScanFiles(list: FileList | null) {
+    if (!list) return;
+    const picked = Array.from(list).filter((f) => f.type.startsWith("image/") || /\.(heic|heif)$/i.test(f.name));
+    setScanFiles((prev) => {
+      const room = Math.max(0, MAX_SCAN_FILES - prev.length);
+      if (picked.length > room) setSymptomError(`一次最多辨識 ${MAX_SCAN_FILES} 張圖片`);
+      return [...prev, ...picked.slice(0, room).map((file) => ({ file, url: URL.createObjectURL(file) }))];
+    });
+  }
+
+  function removeScanFile(i: number) {
+    setScanFiles((prev) => {
+      const x = prev[i];
+      if (x) URL.revokeObjectURL(x.url);
+      return prev.filter((_, j) => j !== i);
+    });
+  }
+
+  async function handleScan() {
+    if (scanFiles.length === 0) return;
+    setScanning(true);
+    setSymptomError("");
+    setScanNotice("");
+    try {
+      const r = await parseScan(scanFiles.map((x) => x.file));
+      const d = r.draft;
+      setSymptomForm((f) => ({
+        ...f,
+        imageUrls: [...f.imageUrls, ...r.imageUrls],
+        ocrText: [f.ocrText, r.ocrText].filter((t) => t.trim()).join("\n\n"),
+        name: d?.name || f.name,
+        category: d?.category || f.category,
+        description: d?.description || f.description,
+        formulas: d?.formulas?.length ? [...f.formulas, ...d.formulas] : f.formulas,
+        points: d?.points?.length ? Array.from(new Set([...f.points, ...d.points])) : f.points,
+        visitDate: d?.visitDate || f.visitDate,
+        clinic: d?.clinic || f.clinic,
+      }));
+      clearScanFiles();
+      setScanNotice(
+        [
+          r.draftError ? `已辨識文字。${r.draftError}。` : "已辨識並自動帶入，請對照辨識原文核對後儲存。",
+          r.uploadError,
+        ].filter(Boolean).join(" ")
+      );
+    } catch (e) {
+      setSymptomError(e instanceof Error ? e.message : "辨識失敗");
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  function removeSavedImage(url: string) {
+    setSymptomForm((f) => ({ ...f, imageUrls: f.imageUrls.filter((x) => x !== url) }));
+  }
 
   function openCreateSymptom() {
+    resetModalState();
     setSymptomForm(emptyForm());
     setParseUrl("");
     setSymptomError("");
@@ -110,6 +220,7 @@ export default function AcupointAtlas() {
   }
 
   function openEditSymptom(sg: SymptomGroupDto) {
+    resetModalState();
     setSymptomForm({
       name: sg.name,
       category: sg.category,
@@ -117,6 +228,11 @@ export default function AcupointAtlas() {
       formulas: sg.formulas.map((f) => ({ ...f })),
       points: [...sg.points],
       sourceUrl: sg.sourceUrl ?? "",
+      sourceType: sg.sourceType === "scan" ? "scan" : "web",
+      visitDate: sg.visitDate ?? "",
+      clinic: sg.clinic ?? "",
+      ocrText: sg.ocrText ?? "",
+      imageUrls: [...(sg.imageUrls ?? [])],
     });
     setParseUrl(sg.sourceUrl ?? "");
     setSymptomError("");
@@ -158,6 +274,15 @@ export default function AcupointAtlas() {
         formulas: symptomForm.formulas,
         points: symptomForm.points,
         sourceUrl: symptomForm.sourceUrl || undefined,
+        ...(symptomForm.sourceType === "scan"
+          ? {
+              sourceType: "scan" as const,
+              visitDate: symptomForm.visitDate || undefined,
+              clinic: symptomForm.clinic,
+              ocrText: symptomForm.ocrText,
+              imageUrls: symptomForm.imageUrls,
+            }
+          : {}),
       };
       if (symptomModal === "create") {
         const created = await createSymptom(input);
@@ -165,11 +290,8 @@ export default function AcupointAtlas() {
       } else if (symptomModal === "edit" && editingSymptomId != null) {
         const updated = await updateSymptom(editingSymptomId, input);
         setSymptoms((prev) => prev.map((x) => x.id === editingSymptomId ? updated : x));
-        if (selectedSymptomId === String(editingSymptomId)) {
-          // keep selection pointing at updated record
-        }
       }
-      setSymptomModal(null);
+      closeSymptomModal();
     } catch (e) {
       setSymptomError(e instanceof Error ? e.message : "儲存失敗");
     } finally {
@@ -539,7 +661,7 @@ export default function AcupointAtlas() {
           ) : (
             <>
               <h2>病徵分類 Categories</h2>
-              {["ALL", ...Object.keys(SYMPTOM_CATEGORIES)].map((c) => (
+              {["ALL", ...categories].map((c) => (
                 <button
                   key={c}
                   className={`${s.meridianBtn} ${category === c ? s.active : ""}`}
@@ -548,12 +670,31 @@ export default function AcupointAtlas() {
                   <span
                     className={s.dot}
                     style={{
-                      background: c === "ALL" ? "#2B2620" : SYMPTOM_CATEGORIES[c],
+                      background: c === "ALL" ? "#2B2620" : categoryColor(c),
                     }}
                   />
                   {c === "ALL" ? "全部病徵" : c}
                 </button>
               ))}
+              {(
+                <>
+                  <h2 style={{ marginTop: 18 }}>資料來源 Source</h2>
+                  {([
+                    ["ALL", "全部來源", "#2B2620"],
+                    ["web", "網路整理", "var(--jade)"],
+                    ["scan", "看診方劑", "var(--cinnabar)"],
+                  ] as const).map(([v, label, color]) => (
+                    <button
+                      key={v}
+                      className={`${s.meridianBtn} ${sourceFilter === v ? s.active : ""}`}
+                      onClick={() => setSourceFilter(v)}
+                    >
+                      <span className={s.dot} style={{ background: color }} />
+                      {label}
+                    </button>
+                  ))}
+                </>
+              )}
             </>
           )}
         </aside>
@@ -834,25 +975,30 @@ export default function AcupointAtlas() {
           ) : (
             <div className={s.symptomGrid}>
               {isAdmin && (
-                <button
-                  className={s.symptomAddBtn}
-                  onClick={openCreateSymptom}
-                >
-                  ＋ 新增病徵
-                </button>
+                <div className={s.symptomAddRow}>
+                  <button className={s.symptomAddBtn} onClick={openCreateSymptom}>
+                    ＋ 新增病徵
+                  </button>
+                  <button className={`${s.symptomAddBtn} ${s.symptomScanBtn}`} onClick={openCreateScan}>
+                    📷 掃描看診方劑
+                  </button>
+                </div>
               )}
               {(() => {
                 const list = symptoms.filter((sg) => {
                   const catOk = category === "ALL" || sg.category === category;
+                  const srcOk =
+                    sourceFilter === "ALL" || (sg.sourceType === "scan" ? "scan" : "web") === sourceFilter;
                   const searchOk =
                     !term ||
                     [
                       sg.name,
                       sg.description,
                       sg.category,
+                      sg.clinic ?? "",
                       ...sg.formulas.flatMap((f) => [f.name, f.composition, f.pattern]),
-                    ].some((f) => f.toLowerCase().includes(term));
-                  return catOk && searchOk;
+                    ].some((f) => (f ?? "").toLowerCase().includes(term));
+                  return catOk && srcOk && searchOk;
                 });
                 if (list.length === 0)
                   return (
@@ -868,10 +1014,15 @@ export default function AcupointAtlas() {
                     >
                       <span
                         className={s.catTag}
-                        style={{ background: SYMPTOM_CATEGORIES[sg.category] }}
+                        style={{ background: categoryColor(sg.category) }}
                       >
                         {sg.category}
                       </span>
+                      {sg.sourceType === "scan" && (
+                        <span className={s.scanTag}>
+                          看診方劑{sg.visitDate ? ` · ${sg.visitDate}` : ""}
+                        </span>
+                      )}
                       <h4>{sg.name}</h4>
                       <p>{sg.description}</p>
                       <p style={{ marginTop: 6, color: "var(--cinnabar)", fontSize: "11.5px" }}>
@@ -943,14 +1094,99 @@ export default function AcupointAtlas() {
       {symptomModal && (
         <div
           className={s.modalOverlay}
-          onClick={() => setSymptomModal(null)}
+          onClick={closeSymptomModal}
         >
           <div className={s.modalBox} onClick={(e) => e.stopPropagation()}>
             <div className={s.modalHeader}>
-              <h3>{symptomModal === "create" ? "新增病徵" : "編輯病徵"}</h3>
-              <button type="button" className={s.modalClose} onClick={() => setSymptomModal(null)}>✕</button>
+              <h3>
+                {symptomForm.sourceType === "scan"
+                  ? symptomModal === "create" ? "新增看診紀錄" : "編輯看診紀錄"
+                  : symptomModal === "create" ? "新增病徵" : "編輯病徵"}
+              </h3>
+              <button type="button" className={s.modalClose} onClick={closeSymptomModal}>✕</button>
             </div>
 
+            {symptomForm.sourceType === "scan" ? (
+              <>
+                {/* Scan → Google Cloud Vision OCR → Gemini draft */}
+                <div className={s.modalField}>
+                  <label className={s.modalLabel}>
+                    處方箋 / 藥袋照片（最多 {MAX_SCAN_FILES} 張，以 Google Cloud Vision 辨識文字並自動帶入表單）
+                  </label>
+                  <p className={s.scanHint} style={{ margin: "0 0 6px" }}>
+                    ⚠ 照片會存到公開的雲端空間，上傳前請先遮住姓名、身分證字號、病歷號等個資。
+                  </p>
+                  <div className={s.scanThumbs}>
+                    {symptomForm.imageUrls.map((url) => (
+                      <div key={url} className={s.scanThumb}>
+                        <a href={url} target="_blank" rel="noreferrer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt="已上傳的掃描" />
+                        </a>
+                        <button type="button" className={s.scanRemove} onClick={() => removeSavedImage(url)} title="移除此圖片">✕</button>
+                      </div>
+                    ))}
+                    {scanFiles.map((x, i) => (
+                      <div key={x.url} className={`${s.scanThumb} ${s.scanPending}`}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={x.url} alt={x.file.name} />
+                        <button type="button" className={s.scanRemove} onClick={() => removeScanFile(i)} title="移除">✕</button>
+                      </div>
+                    ))}
+                    {scanFiles.length < MAX_SCAN_FILES && (
+                      <label className={s.scanPick}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          hidden
+                          onChange={(e) => { addScanFiles(e.target.files); e.target.value = ""; }}
+                        />
+                        ＋ 選擇 / 拍照
+                      </label>
+                    )}
+                  </div>
+                  <div className={s.modalParseRow} style={{ marginTop: 8 }}>
+                    <span className={s.scanHint}>
+                      {scanFiles.length > 0 ? `${scanFiles.length} 張待辨識` : "選好照片後按「辨識」"}
+                    </span>
+                    <button
+                      type="button"
+                      className={s.parseBtn}
+                      onClick={handleScan}
+                      disabled={scanning || scanFiles.length === 0}
+                    >
+                      {scanning ? "辨識中…" : "辨識"}
+                    </button>
+                  </div>
+                  {scanNotice && <p className={s.scanNotice}>{scanNotice}</p>}
+                </div>
+
+                <div className={s.modalField}>
+                  <div className={s.scanMetaRow}>
+                    <div>
+                      <label className={s.modalLabel}>看診日期</label>
+                      <input
+                        type="date"
+                        className={s.modalInput}
+                        value={symptomForm.visitDate}
+                        onChange={(e) => setSymptomForm((f) => ({ ...f, visitDate: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className={s.modalLabel}>診所 / 醫師</label>
+                      <input
+                        className={s.modalInput}
+                        value={symptomForm.clinic}
+                        onChange={(e) => setSymptomForm((f) => ({ ...f, clinic: e.target.value }))}
+                        placeholder="例：仁心中醫診所 王醫師"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+            <>
             {/* URL parse */}
             <div className={s.modalField}>
               <label className={s.modalLabel}>來源網址（可貼入 URL 讓 AI 自動解析）</label>
@@ -971,9 +1207,11 @@ export default function AcupointAtlas() {
                 </button>
               </div>
             </div>
+            </>
+            )}
 
             <div className={s.modalField}>
-              <label className={s.modalLabel}>名稱 *</label>
+              <label className={s.modalLabel}>{symptomForm.sourceType === "scan" ? "病徵 / 主訴 *" : "名稱 *"}</label>
               <input
                 className={s.modalInput}
                 value={symptomForm.name}
@@ -984,16 +1222,44 @@ export default function AcupointAtlas() {
 
             <div className={s.modalField}>
               <label className={s.modalLabel}>分類</label>
-              <select
-                className={s.modalSelect}
-                value={symptomForm.category}
-                onChange={(e) => setSymptomForm((f) => ({ ...f, category: e.target.value }))}
-              >
-                <option value="">請選擇…</option>
-                {Object.keys(SYMPTOM_CATEGORIES).map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              {customCategory ? (
+                <div className={s.modalParseRow}>
+                  <input
+                    className={s.modalInput}
+                    value={symptomForm.category}
+                    onChange={(e) => setSymptomForm((f) => ({ ...f, category: e.target.value }))}
+                    placeholder="輸入新分類，例如：五官類、皮膚類"
+                    maxLength={32}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className={s.parseBtn}
+                    onClick={() => { setCustomCategory(false); setSymptomForm((f) => ({ ...f, category: "" })); }}
+                  >
+                    改用選單
+                  </button>
+                </div>
+              ) : (
+                <select
+                  className={s.modalSelect}
+                  value={categories.includes(symptomForm.category) ? symptomForm.category : ""}
+                  onChange={(e) => {
+                    if (e.target.value === "__custom__") {
+                      setCustomCategory(true);
+                      setSymptomForm((f) => ({ ...f, category: "" }));
+                    } else {
+                      setSymptomForm((f) => ({ ...f, category: e.target.value }));
+                    }
+                  }}
+                >
+                  <option value="">請選擇…</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                  <option value="__custom__">＋ 自訂分類…</option>
+                </select>
+              )}
             </div>
 
             <div className={s.modalField}>
@@ -1044,10 +1310,24 @@ export default function AcupointAtlas() {
               />
             </div>
 
+            {symptomForm.sourceType === "scan" && (
+              <div className={s.modalField}>
+                <details className={s.ocrDetails} open={!symptomForm.formulas.length && !!symptomForm.ocrText}>
+                  <summary>辨識原文（可修改，供日後核對）</summary>
+                  <textarea
+                    className={s.modalTextarea}
+                    value={symptomForm.ocrText}
+                    onChange={(e) => setSymptomForm((f) => ({ ...f, ocrText: e.target.value }))}
+                    rows={6}
+                  />
+                </details>
+              </div>
+            )}
+
             {symptomError && <p className={s.modalError}>{symptomError}</p>}
 
             <div className={s.modalActions}>
-              <button type="button" className={s.modalCancel} onClick={() => setSymptomModal(null)}>取消</button>
+              <button type="button" className={s.modalCancel} onClick={closeSymptomModal}>取消</button>
               <button type="button" className={s.modalSave} onClick={handleSaveSymptom} disabled={symptomSaving}>
                 {symptomSaving ? "儲存中…" : "儲存"}
               </button>
@@ -1257,7 +1537,7 @@ function SymptomDetail({
     );
   }
 
-  const color = SYMPTOM_CATEGORIES[g.category];
+  const color = categoryColor(g.category);
 
   return (
     <>
@@ -1267,16 +1547,44 @@ function SymptomDetail({
         <span className={s.meridianTag} style={{ background: color }}>
           {g.category}
         </span>
+        {g.sourceType === "scan" && (
+          <section>
+            <h3>看診紀錄</h3>
+            {(g.visitDate || g.clinic) && (
+              <p>
+                {g.visitDate && <>看診日期：{g.visitDate}</>}
+                {g.visitDate && g.clinic && "　"}
+                {g.clinic && <>診所 / 醫師：{g.clinic}</>}
+              </p>
+            )}
+            {!!g.imageUrls?.length && (
+              <div className={s.scanThumbs}>
+                {g.imageUrls.map((url) => (
+                  <a key={url} className={s.scanThumb} href={url} target="_blank" rel="noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="看診方劑掃描" />
+                  </a>
+                ))}
+              </div>
+            )}
+            {g.ocrText && (
+              <details className={s.ocrDetails}>
+                <summary>辨識原文</summary>
+                <pre>{g.ocrText}</pre>
+              </details>
+            )}
+          </section>
+        )}
         <section>
           <h3>概述</h3>
           <p>{g.description}</p>
         </section>
         <section>
-          <h3>依證型選方</h3>
-          {g.formulas.map((f) => (
-            <div className={s.formulaItem} key={f.name}>
+          <h3>{g.sourceType === "scan" ? "處方" : "依證型選方"}</h3>
+          {g.formulas.map((f, i) => (
+            <div className={s.formulaItem} key={`${i}-${f.name}`}>
               <h4>{f.name}</h4>
-              <span className={s.patternTag}>辨證：{f.pattern}</span>
+              {f.pattern && <span className={s.patternTag}>辨證：{f.pattern}</span>}
               <div className={s.fRow}>
                 <b>組成</b>
                 {f.composition}
