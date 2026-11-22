@@ -23,6 +23,11 @@ import {
   parseSymptomUrl,
   parseScan,
   MAX_SCAN_FILES,
+  COLOR_LIGHTS,
+  TECHNIQUE_LABELS,
+  colorLightByNo,
+  type ColorLightTherapy,
+  type TherapyTechnique,
   type SymptomGroupDto,
   type SymptomSourceType,
   type Formula,
@@ -48,6 +53,11 @@ function seq(id: string): number {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+const DETAIL_W_KEY = "atlas.detailWidth";
+const DETAIL_W_DEFAULT = 340;
+const DETAIL_W_MIN = 260;
+const DETAIL_W_MAX = 960;
+
 export default function AcupointAtlas() {
   const [view, setView] = useState<View>("body");
   const [side, setSide] = useState<Side>("front");
@@ -61,6 +71,69 @@ export default function AcupointAtlas() {
   const [refZoom, setRefZoom] = useState(1);
   const [refPan, setRefPan] = useState<XY>({ x: 0, y: 0 });
   const [mobileTab, setMobileTab] = useState<MobileTab>("stage");
+  // ---- 右側詳情欄寬度：可拖曳中間與右側之間的分隔線調整，寬度記在瀏覽器 ----
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const detailW = useRef(DETAIL_W_DEFAULT);
+  const detailDrag = useRef<{ x: number; w: number } | null>(null);
+
+  const applyDetailWidth = useCallback((w: number, persist: boolean) => {
+    const el = layoutRef.current;
+    // 左欄 220px，中間至少保留 360px
+    const max = el ? Math.max(DETAIL_W_MIN, Math.min(DETAIL_W_MAX, el.clientWidth - 220 - 360)) : DETAIL_W_MAX;
+    const clamped = Math.round(Math.min(max, Math.max(DETAIL_W_MIN, w)));
+    detailW.current = clamped;
+    el?.style.setProperty("--detail-w", `${clamped}px`);
+    if (persist) {
+      try {
+        localStorage.setItem(DETAIL_W_KEY, String(clamped));
+      } catch {
+        // 無法使用 localStorage 時只是不記住寬度
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    let saved = NaN;
+    try {
+      saved = Number(localStorage.getItem(DETAIL_W_KEY));
+    } catch {
+      // ignore
+    }
+    if (Number.isFinite(saved) && saved > 0) applyDetailWidth(saved, false);
+  }, [applyDetailWidth]);
+
+  function onDetailResizeDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    detailDrag.current = { x: e.clientX, w: detailW.current };
+    document.body.style.userSelect = "none";
+  }
+
+  function onDetailResizeMove(e: React.PointerEvent<HTMLDivElement>) {
+    const d = detailDrag.current;
+    if (!d) return;
+    // 往左拖 → 右欄變寬
+    applyDetailWidth(d.w - (e.clientX - d.x), false);
+  }
+
+  function onDetailResizeUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!detailDrag.current) return;
+    detailDrag.current = null;
+    document.body.style.userSelect = "";
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    applyDetailWidth(detailW.current, true);
+  }
+
+  function onDetailResizeKey(e: React.KeyboardEvent<HTMLDivElement>) {
+    const step = e.shiftKey ? 80 : 20;
+    if (e.key === "ArrowLeft") applyDetailWidth(detailW.current + step, true);
+    else if (e.key === "ArrowRight") applyDetailWidth(detailW.current - step, true);
+    else return;
+    e.preventDefault();
+  }
+
+  // 從病徵頁點穴位跳到穴道地圖時，記住來源病徵以便返回
+  const [returnSymptomId, setReturnSymptomId] = useState<string | null>(null);
   const refDrag = useRef<{ sx: number; sy: number; px: number; py: number } | null>(
     null
   );
@@ -103,6 +176,7 @@ export default function AcupointAtlas() {
     description: string;
     formulas: Formula[];
     points: string[];
+    colorLight: ColorLightTherapy[];
     sourceUrl: string;
     sourceType: SymptomSourceType;
     visitDate: string;
@@ -111,7 +185,7 @@ export default function AcupointAtlas() {
     imageUrls: string[];
   };
   const emptyForm = (sourceType: SymptomSourceType = "web"): SymptomForm => ({
-    name: "", category: "", description: "", formulas: [], points: [], sourceUrl: "",
+    name: "", category: "", description: "", formulas: [], points: [], colorLight: [], sourceUrl: "",
     sourceType, visitDate: "", clinic: "", ocrText: "", imageUrls: [],
   });
 
@@ -227,6 +301,7 @@ export default function AcupointAtlas() {
       description: sg.description,
       formulas: sg.formulas.map((f) => ({ ...f })),
       points: [...sg.points],
+      colorLight: (sg.colorLight ?? []).map((c) => ({ ...c, points: [...c.points] })),
       sourceUrl: sg.sourceUrl ?? "",
       sourceType: sg.sourceType === "scan" ? "scan" : "web",
       visitDate: sg.visitDate ?? "",
@@ -273,6 +348,7 @@ export default function AcupointAtlas() {
         description: symptomForm.description,
         formulas: symptomForm.formulas,
         points: symptomForm.points,
+        colorLight: symptomForm.colorLight,
         sourceUrl: symptomForm.sourceUrl || undefined,
         ...(symptomForm.sourceType === "scan"
           ? {
@@ -326,6 +402,57 @@ export default function AcupointAtlas() {
 
   function removeFormula(i: number) {
     setSymptomForm((f) => ({ ...f, formulas: f.formulas.filter((_, j) => j !== i) }));
+  }
+
+  // ---- 彩光 / 揉壓療法（一個病症可多筆，依序執行） ----
+  function addColorLight() {
+    setSymptomForm((f) => ({
+      ...f,
+      colorLight: [...f.colorLight, { points: [], techniques: ["light"], colors: [], method: "", effect: "" }],
+    }));
+  }
+
+  function toggleTechnique(i: number, tech: TherapyTechnique) {
+    setSymptomForm((f) => {
+      const colorLight = [...f.colorLight];
+      const cur = colorLight[i].techniques;
+      const next = cur.includes(tech) ? cur.filter((x) => x !== tech) : [...cur, tech];
+      // 固定顯示順序：光照在前、揉壓在後
+      colorLight[i] = { ...colorLight[i], techniques: (["light", "press"] as const).filter((x) => next.includes(x)) };
+      return { ...f, colorLight };
+    });
+  }
+
+  /** 點色號：沒選就加到最後（依點選順序照射），已選就取消。 */
+  function toggleColor(i: number, no: number) {
+    setSymptomForm((f) => {
+      const colorLight = [...f.colorLight];
+      const cur = colorLight[i].colors;
+      colorLight[i] = { ...colorLight[i], colors: cur.includes(no) ? cur.filter((x) => x !== no) : [...cur, no] };
+      return { ...f, colorLight };
+    });
+  }
+
+  function moveColorLight(i: number, delta: -1 | 1) {
+    setSymptomForm((f) => {
+      const j = i + delta;
+      if (j < 0 || j >= f.colorLight.length) return f;
+      const colorLight = [...f.colorLight];
+      [colorLight[i], colorLight[j]] = [colorLight[j], colorLight[i]];
+      return { ...f, colorLight };
+    });
+  }
+
+  function updateColorLight<K extends keyof ColorLightTherapy>(i: number, field: K, value: ColorLightTherapy[K]) {
+    setSymptomForm((f) => {
+      const colorLight = [...f.colorLight];
+      colorLight[i] = { ...colorLight[i], [field]: value };
+      return { ...f, colorLight };
+    });
+  }
+
+  function removeColorLight(i: number) {
+    setSymptomForm((f) => ({ ...f, colorLight: f.colorLight.filter((_, j) => j !== i) }));
   }
 
   function zoomRef(delta: number) {
@@ -598,6 +725,7 @@ export default function AcupointAtlas() {
   function jumpToPoint(pointId: string) {
     const p = POINTS.find((x) => x.id === pointId);
     if (!p) return;
+    setReturnSymptomId(view === "symptom" ? selectedSymptomId : null);
     setView("body");
     setMeridian("ALL");
     setSearch("");
@@ -610,8 +738,22 @@ export default function AcupointAtlas() {
     setSearch("");
     setSelectedId(null);
     setSelectedSymptomId(null);
+    setReturnSymptomId(null);
     setMobileTab("stage");
   }
+
+  function backToSymptom() {
+    if (!returnSymptomId) return;
+    setView("symptom");
+    setSearch("");
+    setSelectedId(null);
+    setSelectedSymptomId(returnSymptomId);
+    setReturnSymptomId(null);
+  }
+
+  const returnSymptom = returnSymptomId
+    ? symptoms.find((x) => String(x.id) === returnSymptomId) ?? null
+    : null;
 
   return (
     <div className={s.root}>
@@ -636,7 +778,7 @@ export default function AcupointAtlas() {
         </div>
       </header>
 
-      <div className={s.layout}>
+      <div className={s.layout} ref={layoutRef}>
         {/* sidebar */}
         <aside className={`${s.sidebar} ${mobileTab === "sidebar" ? s.mobileActive : ""}`}>
           {view === "body" ? (
@@ -1044,6 +1186,25 @@ export default function AcupointAtlas() {
 
         {/* detail */}
         <aside className={`${s.detail} ${mobileTab === "detail" ? s.mobileActive : ""}`}>
+          <div
+            className={s.detailResizer}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="拖曳調整右側欄寬度"
+            title="拖曳調整寬度（雙擊恢復預設）"
+            tabIndex={0}
+            onPointerDown={onDetailResizeDown}
+            onPointerMove={onDetailResizeMove}
+            onPointerUp={onDetailResizeUp}
+            onPointerCancel={onDetailResizeUp}
+            onDoubleClick={() => applyDetailWidth(DETAIL_W_DEFAULT, true)}
+            onKeyDown={onDetailResizeKey}
+          />
+          {view === "body" && returnSymptom && (
+            <button type="button" className={s.backToSymptom} onClick={backToSymptom}>
+              ← 返回「{returnSymptom.name}」
+            </button>
+          )}
           {view === "symptom" ? (
             <SymptomDetail
               selectedSymptomId={selectedSymptomId}
@@ -1308,6 +1469,114 @@ export default function AcupointAtlas() {
                 value={symptomForm.points}
                 onChange={(pts) => setSymptomForm((f) => ({ ...f, points: pts }))}
               />
+            </div>
+
+            {/* 彩光 / 揉壓療法 */}
+            <div className={s.modalField}>
+              <div className={s.modalLabelRow}>
+                <label className={s.modalLabel}>彩光 / 揉壓療法（依步驟順序執行）</label>
+                <button type="button" className={s.addFormulaBtn} onClick={addColorLight}>＋ 新增步驟</button>
+              </div>
+              {symptomForm.colorLight.map((c, i) => {
+                const light = c.techniques.includes("light");
+                return (
+                  <div key={i} className={s.formulaBlock}>
+                    <div className={s.formulaBlockHeader}>
+                      <span>步驟 {i + 1}</span>
+                      <span className={s.stepTools}>
+                        <button type="button" className={s.stepMoveBtn} disabled={i === 0} onClick={() => moveColorLight(i, -1)} title="上移">↑</button>
+                        <button type="button" className={s.stepMoveBtn} disabled={i === symptomForm.colorLight.length - 1} onClick={() => moveColorLight(i, 1)} title="下移">↓</button>
+                        <button type="button" className={s.removeFormulaBtn} onClick={() => removeColorLight(i)}>✕</button>
+                      </span>
+                    </div>
+                    <div className={s.formulaRow} style={{ alignItems: "flex-start" }}>
+                      <label className={s.formulaLabel}>穴位</label>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <AcupointChipInput
+                          value={c.points}
+                          onChange={(pts) => updateColorLight(i, "points", pts)}
+                        />
+                        {symptomForm.points.some((pid) => !c.points.includes(pid)) && (
+                          <button
+                            type="button"
+                            className={s.copyPointsBtn}
+                            onClick={() =>
+                              updateColorLight(i, "points", Array.from(new Set([...c.points, ...symptomForm.points])))
+                            }
+                          >
+                            帶入建議穴位
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className={s.formulaRow}>
+                      <label className={s.formulaLabel}>方式</label>
+                      <div className={s.techRow}>
+                        {(["light", "press"] as const).map((tech) => (
+                          <button
+                            key={tech}
+                            type="button"
+                            className={`${s.techBtn} ${c.techniques.includes(tech) ? s.active : ""}`}
+                            onClick={() => toggleTechnique(i, tech)}
+                          >
+                            {TECHNIQUE_LABELS[tech]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {light && (
+                      <div className={s.formulaRow} style={{ alignItems: "flex-start" }}>
+                        <label className={s.formulaLabel}>光色</label>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className={s.colorNoGrid}>
+                            {COLOR_LIGHTS.map((cl) => {
+                              const order = c.colors.indexOf(cl.no);
+                              return (
+                                <button
+                                  key={cl.no}
+                                  type="button"
+                                  title={`${cl.no} 號 ${cl.name}`}
+                                  className={`${s.colorNoBtn} ${order >= 0 ? s.active : ""}`}
+                                  onClick={() => toggleColor(i, cl.no)}
+                                >
+                                  <span className={s.colorSwatch} style={{ background: cl.hex }} />
+                                  <span>{cl.no}</span>
+                                  {order >= 0 && c.colors.length > 1 && <sup className={s.colorOrder}>{order + 1}</sup>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <p className={s.colorPicked}>
+                            {c.colors.length
+                              ? <>照射順序：{c.colors.map((no) => `${no} 號${colorLightByNo(no)?.name ?? ""}`).join(" → ")}</>
+                              : "點選色號（可多選，依點選順序照射）"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <div className={s.formulaRow} style={{ alignItems: "flex-start" }}>
+                      <label className={s.formulaLabel}>方法</label>
+                      <textarea
+                        className={s.modalTextarea}
+                        value={c.method}
+                        onChange={(e) => updateColorLight(i, "method", e.target.value)}
+                        rows={3}
+                        placeholder="照射 / 揉壓的時間、次數、力道與順序…（文中提到的穴名會自動連到穴道地圖）"
+                      />
+                    </div>
+                    <div className={s.formulaRow} style={{ alignItems: "flex-start" }}>
+                      <label className={s.formulaLabel}>作用</label>
+                      <textarea
+                        className={s.modalTextarea}
+                        value={c.effect}
+                        onChange={(e) => updateColorLight(i, "effect", e.target.value)}
+                        rows={2}
+                        placeholder="可緩解的表現、調理目的…"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {symptomForm.sourceType === "scan" && (
@@ -1606,17 +1875,140 @@ function SymptomDetail({
             {g.points.map((pid) => {
               const p = POINTS.find((x) => x.id === pid);
               return p ? (
-                <button key={pid} onClick={() => onJump(pid)}>
+                <button key={pid} onClick={() => onJump(pid)} title={p.location}>
                   {p.name} {p.id}
                 </button>
               ) : null;
             })}
           </div>
         </section>
+        {!!g.colorLight?.length && (
+          <section>
+            <h3>彩光 / 揉壓療法</h3>
+            <ol className={s.stepList}>
+              {g.colorLight.map((c, i) => {
+                const light = c.techniques.includes("light");
+                const first = light ? colorLightByNo(c.colors[0] ?? 0) : undefined;
+                return (
+                  <li
+                    className={`${s.formulaItem} ${s.colorLightItem}`}
+                    key={i}
+                    style={first ? { borderLeftColor: first.hex } : undefined}
+                  >
+                    <h4>
+                      <span className={s.stepNo}>步驟 {i + 1}</span>
+                      {c.techniques.map((tech) => (
+                        <span key={tech} className={`${s.techTag} ${tech === "light" ? s.techLight : s.techPress}`}>
+                          {TECHNIQUE_LABELS[tech]}
+                        </span>
+                      ))}
+                    </h4>
+                    {!!c.points.length && (
+                      <div className={s.fRow}>
+                        <b>穴位</b>
+                        <span className={s.relatedPoints} style={{ display: "inline-flex", marginTop: 0 }}>
+                          {c.points.map((pid) => {
+                            const p = POINTS.find((x) => x.id === pid);
+                            return p ? (
+                              <button key={pid} onClick={() => onJump(pid)} title={p.location}>
+                                {p.name} {p.id}
+                              </button>
+                            ) : (
+                              <span key={pid}>{pid}</span>
+                            );
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    {light && !!c.colors.length && (
+                      <div className={s.fRow}>
+                        <b>光色</b>
+                        <span className={s.colorChips}>
+                          {c.colors.map((no, k) => {
+                            const cl = colorLightByNo(no);
+                            return (
+                              <span key={no} className={s.colorChip}>
+                                {k > 0 && <span className={s.colorArrow}>→</span>}
+                                <span className={s.colorSwatch} style={{ background: cl?.hex }} />
+                                {no} 號{cl?.name}
+                              </span>
+                            );
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    {c.method && (
+                      <div className={s.fRow}>
+                        <b>方法</b>
+                        <LinkedPointText text={c.method} onJump={onJump} />
+                      </div>
+                    )}
+                    {c.effect && (
+                      <div className={s.fRow}>
+                        <b>作用</b>
+                        <LinkedPointText text={c.effect} onJump={onJump} />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+            <details className={s.colorLegend}>
+              <summary>彩光號碼對照</summary>
+              <div className={s.colorLegendGrid}>
+                {COLOR_LIGHTS.map((cl) => (
+                  <span key={cl.no} className={s.colorChip}>
+                    <span className={s.colorSwatch} style={{ background: cl.hex }} />
+                    {cl.no} 號 {cl.name}
+                  </span>
+                ))}
+              </div>
+            </details>
+            <p className={s.colorLightHint}>點穴位可到穴道地圖查看位置、取穴與主治。</p>
+          </section>
+        )}
         <div className={s.disclaimer}>
           本資料僅供中醫藥知識教育參考，不能取代醫師診斷與處方。實際用藥請務必諮詢合格中醫師，依個人體質辨證調整。
         </div>
       </div>
     </>
   );
+}
+
+// 把文字中提到的穴名 / 穴位代號變成可點的連結，點了跳到穴道地圖。
+const POINT_BY_TOKEN: Map<string, Point> = (() => {
+  const m = new Map<string, Point>();
+  for (const p of POINTS) {
+    if (p.name.length >= 2) m.set(p.name, p);
+    m.set(p.id.toUpperCase(), p);
+  }
+  return m;
+})();
+const POINT_TOKEN_RE: RegExp = (() => {
+  const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const names = POINTS.map((p) => p.name).filter((n) => n.length >= 2);
+  const ids = POINTS.map((p) => p.id);
+  const alts = [...names, ...ids].sort((a, b) => b.length - a.length).map(esc);
+  // 代號後面不能緊接數字（避免 LI4 吃到 LI41）；英文代號不分大小寫
+  return new RegExp(`(${alts.join("|")})(?![0-9])`, "gi");
+})();
+
+function LinkedPointText({ text, onJump }: { text: string; onJump: (pointId: string) => void }) {
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(POINT_TOKEN_RE)) {
+    const tok = m[0];
+    const p = POINT_BY_TOKEN.get(tok) ?? POINT_BY_TOKEN.get(tok.toUpperCase());
+    const idx = m.index ?? 0;
+    if (!p) continue;
+    if (idx > last) parts.push(text.slice(last, idx));
+    parts.push(
+      <button key={idx} type="button" className={s.inlinePointLink} onClick={() => onJump(p.id)} title={`${p.name} ${p.id}｜${p.location}`}>
+        {tok}
+      </button>
+    );
+    last = idx + tok.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return <span className={s.preLine}>{parts}</span>;
 }

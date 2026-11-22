@@ -11,6 +11,8 @@ public class SymptomGroupRequest {
     private String formulas;
     /** JSON array string — e.g. [\"GV14\",\"LI4\"] */
     private String points;
+    /** JSON array string — 彩光療法 e.g. [{\"color\":\"紅\",\"points\":[\"LI4\"],\"method\":\"...\",\"effect\":\"...\"}] */
+    private String colorLight;
     private String sourceUrl;
     private Integer sortOrder;
     /** "web"（預設）或 "scan"（看診方劑掃描）。 */
@@ -36,6 +38,9 @@ public class SymptomGroupRequest {
 
     public String getPoints() { return points; }
     public void setPoints(String points) { this.points = points; }
+
+    public String getColorLight() { return colorLight; }
+    public void setColorLight(String colorLight) { this.colorLight = colorLight; }
 
     public String getSourceUrl() { return sourceUrl; }
     public void setSourceUrl(String sourceUrl) { this.sourceUrl = sourceUrl; }
