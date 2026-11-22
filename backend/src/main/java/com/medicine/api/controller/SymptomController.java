@@ -225,6 +225,7 @@ public class SymptomController {
         e.setDescription(req.getDescription());
         e.setFormulas(normalizeJson(req.getFormulas(), "[]"));
         e.setPoints(normalizeJson(req.getPoints(), "[]"));
+        e.setColorLight(normalizeJson(req.getColorLight(), "[]"));
         e.setSourceUrl(trimToNull(req.getSourceUrl()));
         e.setSortOrder(req.getSortOrder());
         boolean scan = SCAN.equals(req.getSourceType());
@@ -250,6 +251,7 @@ public class SymptomController {
         node.put("description", e.getDescription() != null ? e.getDescription() : "");
         node.set("formulas", parseJsonArray(e.getFormulas()));
         node.set("points", parseJsonArray(e.getPoints()));
+        node.set("colorLight", parseJsonArray(e.getColorLight()));
         if (e.getSourceUrl() != null) node.put("sourceUrl", e.getSourceUrl());
         if (e.getSortOrder() != null) node.put("sortOrder", e.getSortOrder());
         node.put("sourceType", e.getSourceType() != null ? e.getSourceType() : "web");

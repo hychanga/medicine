@@ -37,6 +37,10 @@ public class SymptomGroupEntity {
     @Column(columnDefinition = "TEXT")
     private String points;
 
+    /** 彩光療法：JSON array of {color, points:[穴位代號], method, effect}。 */
+    @Column(name = "color_light", columnDefinition = "TEXT")
+    private String colorLight;
+
     @Column(name = "source_url", length = 512)
     private String sourceUrl;
 
@@ -99,6 +103,9 @@ public class SymptomGroupEntity {
 
     public String getPoints() { return points; }
     public void setPoints(String points) { this.points = points; }
+
+    public String getColorLight() { return colorLight; }
+    public void setColorLight(String colorLight) { this.colorLight = colorLight; }
 
     public String getSourceUrl() { return sourceUrl; }
     public void setSourceUrl(String sourceUrl) { this.sourceUrl = sourceUrl; }

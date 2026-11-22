@@ -6,6 +6,84 @@ export interface Formula {
   notes: string;
 }
 
+/** 療法方式：光照（彩光照射）或揉壓（按摩穴位）。 */
+export type TherapyTechnique = "light" | "press";
+
+export const TECHNIQUE_LABELS: Record<TherapyTechnique, string> = {
+  light: "光照",
+  press: "揉壓",
+};
+
+/**
+ * 一筆彩光 / 揉壓療法：對一個或多個穴位，用一種或多種色光照射、或揉壓。
+ * 一個病症可有多筆，依順序執行。
+ */
+export interface ColorLightTherapy {
+  /** 穴位代號（同穴道地圖的 id，例如 LI4） */
+  points: string[];
+  /** 光照、揉壓（可兩者都有） */
+  techniques: TherapyTechnique[];
+  /** 彩光號碼（1–11），光照時使用，可多個（依序照射） */
+  colors: number[];
+  /** 執行方式：時間、次數、順序、力道… */
+  method: string;
+  /** 作用 / 可緩解的表現 */
+  effect: string;
+}
+
+/** 彩光號碼與顏色對照。 */
+export const COLOR_LIGHTS: { no: number; name: string; hex: string }[] = [
+  { no: 1, name: "紅色", hex: "#E53935" },
+  { no: 2, name: "橘紅色", hex: "#F4511E" },
+  { no: 3, name: "橘色", hex: "#FB8C00" },
+  { no: 4, name: "綠色", hex: "#43A047" },
+  { no: 5, name: "藍綠色", hex: "#00897B" },
+  { no: 6, name: "藍色", hex: "#1E88E5" },
+  { no: 7, name: "紫色", hex: "#8E24AA" },
+  { no: 8, name: "淡藍色", hex: "#81D4FA" },
+  { no: 9, name: "淡綠色", hex: "#A5D6A7" },
+  { no: 10, name: "粉紫色", hex: "#CE93D8" },
+  { no: 11, name: "粉色", hex: "#F8BBD0" },
+];
+
+export function colorLightByNo(no: number) {
+  return COLOR_LIGHTS.find((c) => c.no === no);
+}
+
+// 舊格式（color 為色名字串）轉成號碼；較長的色名放前面先比對
+const LEGACY_COLOR_NO: [string, number][] = [
+  ["橘紅", 2], ["藍綠", 5], ["淡藍", 8], ["淡綠", 9], ["粉紫", 10],
+  ["紅", 1], ["橘", 3], ["橙", 3], ["綠", 4], ["藍", 6], ["紫", 7], ["粉", 11],
+];
+
+function normalizeColorLight(v: unknown): ColorLightTherapy[] {
+  if (!Array.isArray(v)) return [];
+  const str = (x: unknown) => (typeof x === "string" ? x : "");
+  return v
+    .filter((x): x is Record<string, unknown> => !!x && typeof x === "object")
+    .map((x) => {
+      let colors: number[] = Array.isArray(x.colors)
+        ? x.colors.map(Number).filter((n) => Number.isInteger(n) && !!colorLightByNo(n))
+        : [];
+      const legacy = str(x.color).trim();
+      if (!colors.length && legacy) {
+        const hit = LEGACY_COLOR_NO.find(([name]) => legacy.includes(name));
+        if (hit) colors = [hit[1]];
+      }
+      let techniques: TherapyTechnique[] = Array.isArray(x.techniques)
+        ? x.techniques.filter((t): t is TherapyTechnique => t === "light" || t === "press")
+        : [];
+      if (!Array.isArray(x.techniques) && colors.length) techniques = ["light"];
+      return {
+        points: Array.isArray(x.points) ? x.points.filter((p): p is string => typeof p === "string") : [],
+        techniques,
+        colors,
+        method: str(x.method),
+        effect: str(x.effect),
+      };
+    });
+}
+
 /** "web" = 網路整理；"scan" = 看診方劑掃描。 */
 export type SymptomSourceType = "web" | "scan";
 
@@ -16,6 +94,8 @@ export interface SymptomGroupDto {
   description: string;
   formulas: Formula[];
   points: string[];
+  /** 彩光 / 揉壓療法（一個病症可多筆，依序執行） */
+  colorLight?: ColorLightTherapy[];
   sourceUrl?: string;
   sortOrder?: number;
   sourceType?: SymptomSourceType;
@@ -34,6 +114,7 @@ export interface SymptomGroupInput {
   description: string;
   formulas: Formula[];
   points: string[];
+  colorLight?: ColorLightTherapy[];
   sourceUrl?: string;
   sortOrder?: number;
   sourceType?: SymptomSourceType;
@@ -123,7 +204,8 @@ export async function parseScan(files: File[]): Promise<ScanParseResult> {
 export async function listSymptoms(): Promise<SymptomGroupDto[]> {
   const res = await fetch("/api/symptoms", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load symptoms");
-  return res.json();
+  const list: SymptomGroupDto[] = await res.json();
+  return list.map((g) => ({ ...g, colorLight: normalizeColorLight(g.colorLight) }));
 }
 
 export async function createSymptom(input: SymptomGroupInput): Promise<SymptomGroupDto> {
@@ -133,7 +215,8 @@ export async function createSymptom(input: SymptomGroupInput): Promise<SymptomGr
     body: JSON.stringify(toRequest(input)),
   });
   if (!res.ok) throw new Error(await errorMessage(res));
-  return res.json();
+  const g: SymptomGroupDto = await res.json();
+  return { ...g, colorLight: normalizeColorLight(g.colorLight) };
 }
 
 export async function updateSymptom(id: number, input: SymptomGroupInput): Promise<SymptomGroupDto> {
@@ -143,7 +226,8 @@ export async function updateSymptom(id: number, input: SymptomGroupInput): Promi
     body: JSON.stringify(toRequest(input)),
   });
   if (!res.ok) throw new Error(await errorMessage(res));
-  return res.json();
+  const g: SymptomGroupDto = await res.json();
+  return { ...g, colorLight: normalizeColorLight(g.colorLight) };
 }
 
 export async function deleteSymptom(id: number): Promise<void> {
@@ -175,6 +259,11 @@ function toRequest(input: SymptomGroupInput) {
     description: input.description,
     formulas: JSON.stringify(input.formulas),
     points: JSON.stringify(input.points),
+    colorLight: JSON.stringify(
+      (input.colorLight ?? [])
+        .filter((c) => c.points.length || c.colors.length || c.techniques.length || c.method.trim() || c.effect.trim())
+        .map((c) => ({ ...c, colors: c.techniques.includes("light") ? c.colors : [] }))
+    ),
     sourceUrl: input.sourceUrl,
     sortOrder: input.sortOrder,
     sourceType: input.sourceType,
